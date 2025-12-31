@@ -1,2 +1,2 @@
 # Furnessence
-A team collaboration for development.
+A project is used for development
