@@ -1,362 +1,251 @@
 <?php
-// Start session for storing messages
-session_start();
+require_once 'config.php';
 
-// Database connection (adjust these credentials as needed)
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "furnessence";
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Redirect if already logged in
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit();
 }
 
-// Initialize variables
-$name = $email = $password = $confirm_password = "";
-$name_err = $email_err = $password_err = $confirm_password_err = "";
+$error = '';
+$success = '';
 
-// Process form when submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate name
-    if (empty(trim($_POST["name"]))) {
-        $name_err = "Please enter your name.";
-    } else {
-        $name = trim($_POST["name"]);
-    }
-
-    // Validate email
-    if (empty(trim($_POST["email"]))) {
-        $email_err = "Please enter your email.";
-    } elseif (!filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
-        $email_err = "Please enter a valid email address.";
+// Handle registration form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
+    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+    $agree_terms = isset($_POST['agree_terms']);
+    
+    // Validation
+    if (empty($name) || empty($email) || empty($password) || empty($confirm_password)) {
+        $error = "Please fill in all fields.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Please enter a valid email address.";
+    } elseif (strlen($password) < 6) {
+        $error = "Password must be at least 6 characters long.";
+    } elseif ($password !== $confirm_password) {
+        $error = "Passwords do not match.";
+    } elseif (!$agree_terms) {
+        $error = "Please agree to the terms and conditions.";
     } else {
         // Check if email already exists
-        $sql = "SELECT id FROM users WHERE email = ?";
-        if ($stmt = $conn->prepare($sql)) {
-            $stmt->bind_param("s", $param_email);
-            $param_email = trim($_POST["email"]);
-            if ($stmt->execute()) {
-                $stmt->store_result();
-                if ($stmt->num_rows == 1) {
-                    $email_err = "This email is already registered.";
-                } else {
-                    $email = trim($_POST["email"]);
-                }
-            }
-            $stmt->close();
-        }
-    }
-
-    // Validate password
-    if (empty(trim($_POST["password"]))) {
-        $password_err = "Please enter a password.";
-    } elseif (strlen(trim($_POST["password"])) < 6) {
-        $password_err = "Password must have at least 6 characters.";
-    } else {
-        $password = trim($_POST["password"]);
-    }
-
-    // Validate confirm password
-    if (empty(trim($_POST["confirm_password"]))) {
-        $confirm_password_err = "Please confirm your password.";
-    } else {
-        $confirm_password = trim($_POST["confirm_password"]);
-        if (empty($password_err) && ($password != $confirm_password)) {
-            $confirm_password_err = "Password did not match.";
-        }
-    }
-
-    // Check input errors before inserting in database
-    if (empty($name_err) && empty($email_err) && empty($password_err) && empty($confirm_password_err)) {
-        // Prepare an insert statement
-        $sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-
-        if ($stmt = $conn->prepare($sql)) {
-            // Bind variables to the prepared statement as parameters
-            $stmt->bind_param("sss", $param_name, $param_email, $param_password);
-
-            // Set parameters
-            $param_name = $name;
-            $param_email = $email;
-            $param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
-
-            // Attempt to execute the prepared statement
-            if ($stmt->execute()) {
-                // Redirect to login page
-                header("location: login.php");
-                exit();
+        $check_query = "SELECT id FROM users WHERE email = '$email' LIMIT 1";
+        $check_result = mysqli_query($conn, $check_query);
+        
+        if (mysqli_num_rows($check_result) > 0) {
+            $error = "Email already registered. Please <a href='login.php'>login</a> instead.";
+        } else {
+            // Hash password
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            
+            // Insert user into database
+            $insert_query = "INSERT INTO users (name, email, password, created_at) VALUES ('$name', '$email', '$hashed_password', NOW())";
+            
+            if (mysqli_query($conn, $insert_query)) {
+                $success = "Registration successful! Redirecting to login...";
+                
+                // Redirect after 2 seconds
+                header("refresh:2;url=login.php");
             } else {
-                echo "Something went wrong. Please try again later.";
+                $error = "Registration failed. Please try again.";
             }
-
-            // Close statement
-            $stmt->close();
         }
     }
-
-    // Close connection
-    $conn->close();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration - Furnessence</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .registration-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 20px;
-            background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: var(--fw-500);
-        }
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--light-gray);
-            border-radius: 4px;
-            font-size: 1.6rem;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--tan-crayola);
-        }
-        .error {
-            color: var(--red-orange-color-wheel);
-            font-size: 1.4rem;
-            margin-top: 5px;
-        }
-        .success {
-            color: green;
-            font-size: 1.4rem;
-            margin-top: 5px;
-        }
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--tan-crayola);
-            color: var(--white);
-            border: none;
-            border-radius: 4px;
-            font-size: 1.6rem;
-            font-weight: var(--fw-500);
-            cursor: pointer;
-            transition: var(--transition-1);
-        }
-        .btn:hover {
-            background-color: var(--smokey-black);
-        }
-        .login-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .login-link a {
-            color: var(--tan-crayola);
-            font-weight: var(--fw-500);
-        }
-        .password-strength {
-            margin-top: 5px;
-            font-size: 1.2rem;
-        }
-        .weak { color: red; }
-        .medium { color: orange; }
-        .strong { color: green; }
-    </style>
+    <title>Register - Furnessence</title>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
+    
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Auth CSS -->
+    <link rel="stylesheet" href="./assests/css/auth.css">
+    
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
-    <div class="registration-container">
-        <h2 style="text-align: center; margin-bottom: 30px;">Create Account</h2>
-
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" id="registrationForm">
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" value="<?php echo $name; ?>" required onkeyup="validateName()">
-                <span class="error" id="nameError"><?php echo $name_err; ?></span>
+    
+    <div class="auth-container">
+        
+        <!-- Auth Header -->
+        <div class="auth-header">
+            <a href="index.php" class="logo">Furnessence</a>
+            <h1>Create Account</h1>
+            <p>Join us and start shopping!</p>
+        </div>
+        
+        <!-- Auth Body -->
+        <div class="auth-body">
+            
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-error">
+                    <ion-icon name="alert-circle"></ion-icon>
+                    <span><?php echo $error; ?></span>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($success)): ?>
+                <div class="alert alert-success">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    <span><?php echo $success; ?></span>
+                </div>
+            <?php endif; ?>
+            
+            <form action="" method="POST" class="auth-form">
+                
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="name">
+                        Full Name
+                        <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            class="form-input" 
+                            placeholder="Enter your full name"
+                            value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>"
+                            required
+                        >
+                        <ion-icon name="person-outline"></ion-icon>
+                    </div>
+                </div>
+                
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">
+                        Email Address
+                        <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="Enter your email"
+                            value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>"
+                            required
+                        >
+                        <ion-icon name="mail-outline"></ion-icon>
+                    </div>
+                </div>
+                
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">
+                        Password
+                        <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder="Create a password (min. 6 characters)"
+                            required
+                        >
+                        <ion-icon name="lock-closed-outline"></ion-icon>
+                        <button type="button" class="toggle-password" onclick="togglePassword('password', 'toggle-icon-1')">
+                            <ion-icon name="eye-outline" id="toggle-icon-1"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="confirm_password">
+                        Confirm Password
+                        <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="confirm_password" 
+                            name="confirm_password" 
+                            class="form-input" 
+                            placeholder="Confirm your password"
+                            required
+                        >
+                        <ion-icon name="lock-closed-outline"></ion-icon>
+                        <button type="button" class="toggle-password" onclick="togglePassword('confirm_password', 'toggle-icon-2')">
+                            <ion-icon name="eye-outline" id="toggle-icon-2"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Terms & Conditions -->
+                <div class="checkbox-group">
+                    <input type="checkbox" id="agree_terms" name="agree_terms" required>
+                    <label for="agree_terms">
+                        I agree to the <a href="#" style="color: var(--medium-turquoise);">Terms & Conditions</a>
+                    </label>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit">
+                    Create Account
+                </button>
+                
+            </form>
+            
+            <!-- Divider -->
+            <div class="divider">
+                <span>or sign up with</span>
             </div>
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" value="<?php echo $email; ?>" required onblur="validateEmail()">
-                <span class="error" id="emailError"><?php echo $email_err; ?></span>
+            
+            <!-- Social Login -->
+            <div class="social-login">
+                <button type="button" class="social-btn google" onclick="alert('Google signup coming soon!')">
+                    <ion-icon name="logo-google"></ion-icon>
+                    Google
+                </button>
+                <button type="button" class="social-btn facebook" onclick="alert('Facebook signup coming soon!')">
+                    <ion-icon name="logo-facebook"></ion-icon>
+                    Facebook
+                </button>
             </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required onkeyup="checkPasswordStrength()">
-                <div class="password-strength" id="passwordStrength"></div>
-                <span class="error"><?php echo $password_err; ?></span>
-            </div>
-
-            <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" required onkeyup="validateConfirmPassword()">
-                <span class="error" id="confirmPasswordError"><?php echo $confirm_password_err; ?></span>
-            </div>
-
-            <button type="submit" class="btn">Register</button>
-        </form>
-
-        <div class="login-link">
+            
+        </div>
+        
+        <!-- Auth Footer -->
+        <div class="auth-footer">
             <p>Already have an account? <a href="login.php">Login here</a></p>
         </div>
+        
     </div>
-
+    
     <script>
-        function validateName() {
-            const name = document.getElementById('name').value;
-            const nameError = document.getElementById('nameError');
-
-            // Name validation: not empty, contains only letters and spaces, minimum 2 characters
-            const nameRegex = /^[a-zA-Z\s]+$/;
-            if (name === '') {
-                nameError.textContent = 'Please enter your name.';
-                nameError.style.color = 'var(--red-orange-color-wheel)';
-            } else if (name.length < 2) {
-                nameError.textContent = 'Name must be at least 2 characters long.';
-                nameError.style.color = 'var(--red-orange-color-wheel)';
-            } else if (!nameRegex.test(name)) {
-                nameError.textContent = 'Name can only contain letters and spaces.';
-                nameError.style.color = 'var(--red-orange-color-wheel)';
+        function togglePassword(inputId, iconId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = document.getElementById(iconId);
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.name = 'eye-off-outline';
             } else {
-                nameError.textContent = 'Valid name.';
-                nameError.style.color = 'green';
+                passwordInput.type = 'password';
+                toggleIcon.name = 'eye-outline';
             }
         }
-
-        function validateEmail() {
-            const email = document.getElementById('email').value;
-            const emailError = document.getElementById('emailError');
-
-            // Basic email format validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (email === '') {
-                emailError.textContent = 'Please enter your email.';
-                emailError.style.color = 'var(--red-orange-color-wheel)';
-            } else if (!emailRegex.test(email)) {
-                emailError.textContent = 'Please enter a valid email address.';
-                emailError.style.color = 'var(--red-orange-color-wheel)';
-            } else {
-                emailError.textContent = 'Valid email format.';
-                emailError.style.color = 'green';
-            }
-        }
-
-        function checkPasswordStrength() {
-            const password = document.getElementById('password').value;
-            const strengthIndicator = document.getElementById('passwordStrength');
-
-            let strength = 0;
-            let feedback = [];
-
-            if (password.length >= 6) strength++;
-            else feedback.push('At least 6 characters');
-
-            if (/[a-z]/.test(password)) strength++;
-            else feedback.push('Lowercase letter');
-
-            if (/[A-Z]/.test(password)) strength++;
-            else feedback.push('Uppercase letter');
-
-            if (/[0-9]/.test(password)) strength++;
-            else feedback.push('Number');
-
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-            else feedback.push('Special character');
-
-            switch(strength) {
-                case 0:
-                case 1:
-                    strengthIndicator.innerHTML = '<span class="weak">Weak password</span>';
-                    break;
-                case 2:
-                case 3:
-                    strengthIndicator.innerHTML = '<span class="medium">Medium password</span>';
-                    break;
-                case 4:
-                case 5:
-                    strengthIndicator.innerHTML = '<span class="strong">Strong password</span>';
-                    break;
-            }
-
-            if (feedback.length > 0) {
-                strengthIndicator.innerHTML += '<br><small>Missing: ' + feedback.join(', ') + '</small>';
-            }
-        }
-
-        function validateConfirmPassword() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            const confirmError = document.getElementById('confirmPasswordError');
-
-            if (confirmPassword === '') {
-                confirmError.textContent = 'Please confirm your password.';
-                confirmError.style.color = 'var(--red-orange-color-wheel)';
-            } else if (password !== confirmPassword) {
-                confirmError.textContent = 'Passwords do not match.';
-                confirmError.style.color = 'var(--red-orange-color-wheel)';
-            } else {
-                confirmError.textContent = 'Passwords match.';
-                confirmError.style.color = 'green';
-            }
-        }
-
-        // Form submission validation
-        document.getElementById('registrationForm').addEventListener('submit', function(e) {
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-
-            let isValid = true;
-
-            // Name validation
-            const nameRegex = /^[a-zA-Z\s]+$/;
-            if (name === '' || name.length < 2 || !nameRegex.test(name)) {
-                document.getElementById('nameError').textContent = 'Please enter a valid name (at least 2 characters, letters and spaces only).';
-                isValid = false;
-            }
-
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                document.getElementById('emailError').textContent = 'Please enter a valid email address.';
-                isValid = false;
-            }
-
-            // Password validation
-            if (password.length < 6) {
-                document.getElementById('password').nextElementSibling.nextElementSibling.textContent = 'Password must have at least 6 characters.';
-                isValid = false;
-            }
-
-            // Confirm password validation
-            if (password !== confirmPassword) {
-                document.getElementById('confirmPasswordError').textContent = 'Passwords do not match.';
-                isValid = false;
-            }
-
-            if (!isValid) {
-                e.preventDefault();
-            }
-        });
     </script>
+    
 </body>
 </html>

@@ -1,296 +1,242 @@
 <?php
-// Start session for storing messages
-session_start();
+require_once 'config.php';
 
-// CSRF Protection: Generate token if not exists
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+// Redirect if already logged in
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit();
 }
 
-// Rate Limiting: Simple implementation using session
-$max_attempts = 5;
-$lockout_time = 900; // 15 minutes
+$error = '';
+$success = '';
 
-if (!isset($_SESSION['login_attempts'])) {
-    $_SESSION['login_attempts'] = 0;
-    $_SESSION['last_attempt'] = time();
-}
-
-$current_time = time();
-if ($_SESSION['login_attempts'] >= $max_attempts) {
-    if (($current_time - $_SESSION['last_attempt']) < $lockout_time) {
-        $remaining_time = $lockout_time - ($current_time - $_SESSION['last_attempt']);
-        $error = "Too many failed login attempts. Please try again in " . ceil($remaining_time / 60) . " minutes.";
+// Handle login form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
+    $password = $_POST['password'];
+    $remember = isset($_POST['remember']);
+    
+    if (empty($email) || empty($password)) {
+        $error = "Please fill in all fields.";
     } else {
-        $_SESSION['login_attempts'] = 0;
-    }
-}
-
-// Database connection (adjust these credentials as needed)
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "furnessence";
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Initialize variables
-$email = $password = "";
-$email_err = $password_err = $general_err = "";
-
-// Process form when submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // CSRF Check
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        $general_err = "Invalid request. Please try again.";
-    } else {
-        // Validate email
-        if (empty(trim($_POST["email"]))) {
-            $email_err = "Please enter your email.";
-        } elseif (!filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
-            $email_err = "Please enter a valid email address.";
-        } else {
-            $email = trim($_POST["email"]);
-        }
-
-        // Validate password
-        if (empty(trim($_POST["password"]))) {
-            $password_err = "Please enter your password.";
-        } else {
-            $password = trim($_POST["password"]);
-        }
-
-        // Check input errors before querying database
-        if (empty($email_err) && empty($password_err) && empty($general_err)) {
-            // Prepare a select statement
-            $sql = "SELECT id, name, email, password FROM users WHERE email = ?";
-
-            if ($stmt = $conn->prepare($sql)) {
-                // Bind variables to the prepared statement as parameters
-                $stmt->bind_param("s", $param_email);
-
-                // Set parameters
-                $param_email = $email;
-
-                // Attempt to execute the prepared statement
-                if ($stmt->execute()) {
-                    // Store result
-                    $stmt->store_result();
-
-                    // Check if email exists, if yes then verify password
-                    if ($stmt->num_rows == 1) {
-                        // Bind result variables
-                        $stmt->bind_result($id, $name, $email_db, $hashed_password);
-                        if ($stmt->fetch()) {
-                            if (password_verify($password, $hashed_password)) {
-                                // Password is correct, reset attempts and start a new session
-                                $_SESSION['login_attempts'] = 0;
-
-                                // Store data in session variables
-                                $_SESSION["loggedin"] = true;
-                                $_SESSION["id"] = $id;
-                                $_SESSION["name"] = $name;
-                                $_SESSION["email"] = $email_db;
-
-                                // Remember Me functionality
-                                if (isset($_POST['remember_me'])) {
-                                    $token = bin2hex(random_bytes(32));
-                                    setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', true, true); // 30 days, secure, httponly
-
-                                    // Store token in database (you'd need to add a remember_tokens table)
-                                    // For simplicity, we'll skip database storage here, but in production, store it securely
-                                }
-
-                                // Redirect user to welcome page or index
-                                header("location: index.php");
-                                exit();
-                            } else {
-                                // Password is not valid
-                                $_SESSION['login_attempts']++;
-                                $_SESSION['last_attempt'] = time();
-                                $general_err = "Invalid email or password.";
-                            }
+        // Check if user exists
+        $query = "SELECT * FROM users WHERE email = '$email' LIMIT 1";
+        $result = mysqli_query($conn, $query);
+        
+        if ($result && mysqli_num_rows($result) > 0) {
+            $user = mysqli_fetch_assoc($result);
+            
+            // Verify password
+            if (password_verify($password, $user['password'])) {
+                // Set session variables
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_email'] = $user['email'];
+                
+                // Merge session cart with database cart
+                if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+                    $user_id = $user['id'];
+                    
+                    foreach ($_SESSION['cart'] as $item) {
+                        $product_id = intval($item['product_id']);
+                        $product_name = mysqli_real_escape_string($conn, $item['product_name']);
+                        $product_price = floatval($item['product_price']);
+                        $product_image = mysqli_real_escape_string($conn, $item['product_image']);
+                        $quantity = intval($item['quantity']);
+                        
+                        // Check if product already in database cart
+                        $check_query = "SELECT id, quantity FROM cart WHERE user_id = $user_id AND product_id = $product_id LIMIT 1";
+                        $check_result = mysqli_query($conn, $check_query);
+                        
+                        if (mysqli_num_rows($check_result) > 0) {
+                            // Update quantity
+                            $existing = mysqli_fetch_assoc($check_result);
+                            $new_quantity = $existing['quantity'] + $quantity;
+                            $update_query = "UPDATE cart SET quantity = $new_quantity WHERE id = {$existing['id']}";
+                            mysqli_query($conn, $update_query);
+                        } else {
+                            // Insert new item
+                            $insert_query = "INSERT INTO cart (user_id, product_id, product_name, product_price, product_image, quantity) VALUES ($user_id, $product_id, '$product_name', $product_price, '$product_image', $quantity)";
+                            mysqli_query($conn, $insert_query);
                         }
-                    } else {
-                        // Email doesn't exist
-                        $_SESSION['login_attempts']++;
-                        $_SESSION['last_attempt'] = time();
-                        $general_err = "Invalid email or password.";
                     }
-                } else {
-                    $general_err = "Oops! Something went wrong. Please try again later.";
+                    
+                    // Clear session cart after merging
+                    unset($_SESSION['cart']);
                 }
-
-                // Close statement
-                $stmt->close();
+                
+                // Set remember me cookie if checked
+                if ($remember) {
+                    setcookie('user_email', $email, time() + (86400 * 30), "/"); // 30 days
+                }
+                
+                // Redirect to home page
+                header("Location: index.php");
+                exit();
+            } else {
+                $error = "Invalid email or password.";
             }
+        } else {
+            $error = "Invalid email or password.";
         }
     }
-
-    // Close connection
-    $conn->close();
 }
-?>
 
+// Pre-fill email if remember me cookie exists
+$remembered_email = isset($_COOKIE['user_email']) ? $_COOKIE['user_email'] : '';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Furnessence</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 20px;
-            background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: var(--fw-500);
-        }
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--light-gray);
-            border-radius: 4px;
-            font-size: 1.6rem;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--tan-crayola);
-        }
-        .error {
-            color: var(--red-orange-color-wheel);
-            font-size: 1.4rem;
-            margin-top: 5px;
-        }
-        .success {
-            color: green;
-            font-size: 1.4rem;
-            margin-top: 5px;
-        }
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--tan-crayola);
-            color: var(--white);
-            border: none;
-            border-radius: 4px;
-            font-size: 1.6rem;
-            font-weight: var(--fw-500);
-            cursor: pointer;
-            transition: var(--transition-1);
-        }
-        .btn:hover {
-            background-color: var(--smokey-black);
-        }
-        .register-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .register-link a {
-            color: var(--tan-crayola);
-            font-weight: var(--fw-500);
-        }
-    </style>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
+    
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Auth CSS -->
+    <link rel="stylesheet" href="./assests/css/auth.css">
+    
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
-    <div class="login-container">
-        <h2 style="text-align: center; margin-bottom: 30px;">Login to Furnessence</h2>
-
-        <?php if (!empty($error)): ?>
-            <div class="error" style="text-align: center; margin-bottom: 20px;"><?php echo $error; ?></div>
-        <?php endif; ?>
-
-        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" id="loginForm">
-            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" value="<?php echo $email; ?>" required onblur="validateEmail()">
-                <span class="error" id="emailError"><?php echo $email_err; ?></span>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-                <span class="error"><?php echo $password_err; ?></span>
-            </div>
-
-            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 20px;">
-                <input type="checkbox" id="remember_me" name="remember_me" style="margin-right: 8px;">
-                <label for="remember_me" style="margin-bottom: 0; font-weight: normal;">Remember Me</label>
-            </div>
-
-            <?php if (!empty($general_err)): ?>
-                <div class="error" style="text-align: center; margin-bottom: 15px;"><?php echo $general_err; ?></div>
-            <?php endif; ?>
-
-            <button type="submit" class="btn">Login</button>
-        </form>
-
-        <div class="register-link">
-            <p>Don't have an account? <a href="registration.php">Register here</a></p>
+    
+    <div class="auth-container">
+        
+        <!-- Auth Header -->
+        <div class="auth-header">
+            <a href="index.php" class="logo">Furnessence</a>
+            <h1>Welcome Back!</h1>
+            <p>Login to access your account</p>
         </div>
+        
+        <!-- Auth Body -->
+        <div class="auth-body">
+            
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-error">
+                    <ion-icon name="alert-circle"></ion-icon>
+                    <span><?php echo $error; ?></span>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($success)): ?>
+                <div class="alert alert-success">
+                    <ion-icon name="checkmark-circle"></ion-icon>
+                    <span><?php echo $success; ?></span>
+                </div>
+            <?php endif; ?>
+            
+            <form action="" method="POST" class="auth-form">
+                
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">
+                        Email Address
+                        <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="Enter your email"
+                            value="<?php echo htmlspecialchars($remembered_email); ?>"
+                            required
+                        >
+                        <ion-icon name="mail-outline"></ion-icon>
+                    </div>
+                </div>
+                
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">
+                        Password
+                        <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder="Enter your password"
+                            required
+                        >
+                        <ion-icon name="lock-closed-outline"></ion-icon>
+                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                            <ion-icon name="eye-outline" id="toggle-icon"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Remember Me & Forgot Password -->
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#" onclick="alert('Password reset functionality coming soon!'); return false;">Forgot Password?</a>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit">
+                    Login
+                </button>
+                
+            </form>
+            
+            <!-- Divider -->
+            <div class="divider">
+                <span>or continue with</span>
+            </div>
+            
+            <!-- Social Login -->
+            <div class="social-login">
+                <button type="button" class="social-btn google" onclick="alert('Google login coming soon!')">
+                    <ion-icon name="logo-google"></ion-icon>
+                    Google
+                </button>
+                <button type="button" class="social-btn facebook" onclick="alert('Facebook login coming soon!')">
+                    <ion-icon name="logo-facebook"></ion-icon>
+                    Facebook
+                </button>
+            </div>
+            
+        </div>
+        
+        <!-- Auth Footer -->
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="registration.php">Sign up here</a></p>
+        </div>
+        
     </div>
-
+    
     <script>
-        function validateEmail() {
-            const email = document.getElementById('email').value;
-            const emailError = document.getElementById('emailError');
-
-            // Basic email format validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (email === '') {
-                emailError.textContent = 'Please enter your email.';
-                emailError.style.color = 'var(--red-orange-color-wheel)';
-            } else if (!emailRegex.test(email)) {
-                emailError.textContent = 'Please enter a valid email address.';
-                emailError.style.color = 'var(--red-orange-color-wheel)';
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.name = 'eye-off-outline';
             } else {
-                emailError.textContent = 'Valid email format.';
-                emailError.style.color = 'green';
+                passwordInput.type = 'password';
+                toggleIcon.name = 'eye-outline';
             }
         }
-
-        // Form submission validation
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            let isValid = true;
-
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                document.getElementById('emailError').textContent = 'Please enter a valid email address.';
-                isValid = false;
-            }
-
-            // Password validation
-            if (password.length < 6) {
-                document.getElementById('password').nextElementSibling.textContent = 'Password must have at least 6 characters.';
-                isValid = false;
-            }
-
-            if (!isValid) {
-                e.preventDefault();
-            }
-        });
     </script>
+    
 </body>
 </html>

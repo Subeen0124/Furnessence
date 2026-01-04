@@ -1,27 +1,3 @@
-<?php
-session_start();
-
-// Initialize cart if not exists
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [];
-}
-
-// Handle add to cart
-if (isset($_GET['add_to_cart'])) {
-    $product_id = (int)$_GET['add_to_cart'];
-    if (!isset($_SESSION['cart'][$product_id])) {
-        $_SESSION['cart'][$product_id] = 1;
-    } else {
-        $_SESSION['cart'][$product_id]++;
-    }
-    header("location: index.php");
-    exit();
-}
-
-// Calculate cart count
-$cart_count = array_sum($_SESSION['cart']);
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -45,7 +21,7 @@ $cart_count = array_sum($_SESSION['cart']);
   <!-- 
     - custom css link
   -->
-  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assests/css/style.css">
 
   <!-- 
     - google font link
@@ -58,15 +34,44 @@ $cart_count = array_sum($_SESSION['cart']);
   <!-- 
     - preload images
   -->
-  <link rel="preload" as="image" href="./assets/images/hero-product-1.jpg">
-  <link rel="preload" as="image" href="./assets/images/hero-product-2.jpg">
-  <link rel="preload" as="image" href="./assets/images/hero-product-3.jpg">
-  <link rel="preload" as="image" href="./assets/images/hero-product-4.jpg">
-  <link rel="preload" as="image" href="./assets/images/hero-product-5.jpg">
+  <link rel="preload" as="image" href="./assests/images/hero-product-1.jpg">
+  <link rel="preload" as="image" href="./assests/images/hero-product-2.jpg">
+  <link rel="preload" as="image" href="./assests/images/hero-product-3.jpg">
+  <link rel="preload" as="image" href="./assests/images/hero-product-4.jpg">
+  <link rel="preload" as="image" href="./assests/images/hero-product-5.jpg">
 
 </head>
 
 <body id="top">
+<?php 
+require_once 'config.php';
+$is_logged_in = isset($_SESSION['user_id']);
+$user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
+
+// Get wishlist count
+$wishlist_count = 0;
+$cart_count = 0;
+
+if ($is_logged_in) {
+    $wishlist_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
+    $wishlist_result = mysqli_query($conn, $wishlist_query);
+    if ($wishlist_result) {
+        $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
+    }
+    
+    $cart_query = "SELECT COUNT(*) as count FROM cart WHERE user_id = $user_id";
+    $cart_result = mysqli_query($conn, $cart_query);
+    if ($cart_result) {
+        $cart_count = mysqli_fetch_assoc($cart_result)['count'];
+    }
+} else {
+    // For guest users, count from session
+    if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+        $cart_count = count($_SESSION['cart']);
+    }
+}
+?>
 
   <!-- 
     - #HEADER
@@ -75,33 +80,43 @@ $cart_count = array_sum($_SESSION['cart']);
   <header class="header" data-header>
     <div class="container">
 
+      <a href="index.php" class="logo">furnessence</a>
+
       <div class="input-wrapper">
         <input type="search" name="search" placeholder="Search Anything..." class="input-field">
 
         <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
       </div>
 
-      <a href="#" class="logo">furnessence</a>
-
       <div class="header-action">
 
-        <button class="header-action-btn" aria-label="user">
-          <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
-        </button>
+        <?php if ($is_logged_in): ?>
+          <button class="header-action-btn" aria-label="user" title="<?php echo htmlspecialchars($user_name); ?>" onclick="window.location.href='profile.php'">
+            <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+          </button>
+        <?php else: ?>
+          <button class="header-action-btn" aria-label="login" title="Login" onclick="window.location.href='login.php'">
+            <ion-icon name="log-in-outline" aria-hidden="true"></ion-icon>
+          </button>
+        <?php endif; ?>
 
-        <button class="header-action-btn" aria-label="favorite list">
+        <button class="header-action-btn" aria-label="favorite list" title="Wishlist" onclick="<?php echo $is_logged_in ? "window.location.href='wishlist.php'" : "window.location.href='login.php'"; ?>">
           <ion-icon name="heart-outline" aria-hidden="true"></ion-icon>
 
-          <span class="btn-badge">0</span>
+          <?php if ($wishlist_count > 0): ?>
+          <span class="btn-badge"><?php echo $wishlist_count; ?></span>
+          <?php endif; ?>
         </button>
 
-        <button class="header-action-btn" aria-label="cart">
+        <button class="header-action-btn" aria-label="cart" title="Shopping Cart" onclick="window.location.href='cart.php'">
           <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
 
+          <?php if ($cart_count > 0): ?>
           <span class="btn-badge"><?php echo $cart_count; ?></span>
+          <?php endif; ?>
         </button>
 
-        <button class="header-action-btn" aria-label="open menu" data-nav-toggler>
+        <button class="header-action-btn nav-toggle-btn" aria-label="open menu" data-nav-toggler>
           <ion-icon name="menu-outline" aria-hidden="true"></ion-icon>
         </button>
 
@@ -168,7 +183,27 @@ $cart_count = array_sum($_SESSION['cart']);
 
     </div>
 
-    <?php include 'navbar.php'; ?>
+    <nav class="navbar">
+      <ul class="navbar-list">
+
+        <li class="navbar-item">
+          <a href="#home" class="navbar-link" data-nav-link>Home</a>
+        </li>
+
+        <li class="navbar-item">
+          <a href="#about" class="navbar-link" data-nav-link>About</a>
+        </li>
+
+        <li class="navbar-item">
+          <a href="#product" class="navbar-link" data-nav-link>Product</a>
+        </li>
+
+        <li class="navbar-item">
+          <a href="#blog" class="navbar-link" data-nav-link>Blogs</a>
+        </li>
+
+      </ul>
+    </nav>
 
     <ul class="contact-list">
 
@@ -244,7 +279,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="hero-card">
 
                 <figure class="card-banner img-holder" style="--width: 285; --height: 396;">
-                  <img src="./assets/images/hero-product-1.jpg" width="285" height="396" alt="Art Deco Home"
+                  <img src="./assests/images/hero-product-1.jpg" width="285" height="396" alt="Art Deco Home"
                     class="img-cover">
                 </figure>
 
@@ -263,7 +298,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="hero-card">
 
                 <figure class="card-banner img-holder" style="--width: 568; --height: 389;">
-                  <img src="./assets/images/hero-product-2.jpg" width="568" height="389" alt="Helen Chair"
+                  <img src="./assests/images/hero-product-2.jpg" width="568" height="389" alt="Helen Chair"
                     class="img-cover">
                 </figure>
 
@@ -282,7 +317,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="hero-card">
 
                 <figure class="card-banner img-holder" style="--width: 285; --height: 396;">
-                  <img src="./assets/images/hero-product-3.jpg" width="285" height="396" alt="Vase Of Flowers"
+                  <img src="./assests/images/hero-product-3.jpg" width="285" height="396" alt="Vase Of Flowers"
                     class="img-cover">
                 </figure>
 
@@ -301,7 +336,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="hero-card">
 
                 <figure class="card-banner img-holder" style="--width: 580; --height: 213;">
-                  <img src="./assets/images/hero-product-4.jpg" width="580" height="213" alt="Wood Eggs"
+                  <img src="./assests/images/hero-product-4.jpg" width="580" height="213" alt="Wood Eggs"
                     class="img-cover">
                 </figure>
 
@@ -320,7 +355,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="hero-card">
 
                 <figure class="card-banner img-holder" style="--width: 580; --height: 213;">
-                  <img src="./assets/images/hero-product-5.jpg" width="580" height="213" alt="Table Wood Pine"
+                  <img src="./assests/images/hero-product-5.jpg" width="580" height="213" alt="Table Wood Pine"
                     class="img-cover">
                 </figure>
 
@@ -363,7 +398,7 @@ $cart_count = array_sum($_SESSION['cart']);
 
           <div class="about-card">
             <figure class="card-banner img-holder" style="--width: 1170; --height: 450;">
-              <img src="./assets/images/about-banner.jpg" width="1170" height="450" loading="lazy" alt="Furnessence promo"
+              <img src="./assests/images/about-banner.jpg" width="1170" height="450" loading="lazy" alt="Furnessence promo"
                 class="img-cover">
             </figure>
 
@@ -416,7 +451,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-1.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-1.jpg" width="300" height="300" loading="lazy"
                     alt="Animi Dolor Pariatur" class="img-cover">
 
                   <ul class="card-action-list">
@@ -428,9 +463,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=1" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -473,7 +508,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-2.jpg" width="300" height="300" loading="lazy" alt="Art Deco Home"
+                  <img src="./assests/images/product-2.jpg" width="300" height="300" loading="lazy" alt="Art Deco Home"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -485,9 +520,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=2" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -518,7 +553,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-3.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-3.jpg" width="300" height="300" loading="lazy"
                     alt="Artificial potted plant" class="img-cover">
 
                   <ul class="card-action-list">
@@ -530,9 +565,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=3" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -561,7 +596,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-4.jpg" width="300" height="300" loading="lazy" alt="Dark Green Jug"
+                  <img src="./assests/images/product-4.jpg" width="300" height="300" loading="lazy" alt="Dark Green Jug"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -573,9 +608,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=4" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -604,7 +639,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-5.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-5.jpg" width="300" height="300" loading="lazy"
                     alt="Drinking Glasses" class="img-cover">
 
                   <ul class="card-action-list">
@@ -616,9 +651,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=5" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -647,7 +682,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-6.jpg" width="300" height="300" loading="lazy" alt="Helen Chair"
+                  <img src="./assests/images/product-6.jpg" width="300" height="300" loading="lazy" alt="Helen Chair"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -659,9 +694,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=6" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -690,7 +725,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-7.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-7.jpg" width="300" height="300" loading="lazy"
                     alt="High Quality Glass Bottle" class="img-cover">
 
                   <ul class="card-action-list">
@@ -702,9 +737,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=7" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -733,7 +768,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-8.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-8.jpg" width="300" height="300" loading="lazy"
                     alt="Living Room & Bedroom Lights" class="img-cover">
 
                   <ul class="card-action-list">
@@ -745,9 +780,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=8" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -776,7 +811,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-9.jpg" width="300" height="300" loading="lazy" alt="Nancy Chair"
+                  <img src="./assests/images/product-9.jpg" width="300" height="300" loading="lazy" alt="Nancy Chair"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -788,9 +823,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=9" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -819,7 +854,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-10.jpg" width="300" height="300" loading="lazy" alt="Simple Chair"
+                  <img src="./assests/images/product-10.jpg" width="300" height="300" loading="lazy" alt="Simple Chair"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -831,9 +866,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=10" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -862,7 +897,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-11.jpg" width="300" height="300" loading="lazy" alt="Smooth Disk"
+                  <img src="./assests/images/product-11.jpg" width="300" height="300" loading="lazy" alt="Smooth Disk"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -874,9 +909,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=11" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -905,7 +940,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-12.jpg" width="300" height="300" loading="lazy" alt="Table Black"
+                  <img src="./assests/images/product-12.jpg" width="300" height="300" loading="lazy" alt="Table Black"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -917,9 +952,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=12" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -948,7 +983,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-13.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-13.jpg" width="300" height="300" loading="lazy"
                     alt="Table Wood Pine" class="img-cover">
 
                   <ul class="card-action-list">
@@ -960,9 +995,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=13" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -991,7 +1026,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-14.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-14.jpg" width="300" height="300" loading="lazy"
                     alt="Teapot with black tea" class="img-cover">
 
                   <ul class="card-action-list">
@@ -1003,9 +1038,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=14" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -1034,7 +1069,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-15.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-15.jpg" width="300" height="300" loading="lazy"
                     alt="Unique Decoration" class="img-cover">
 
                   <ul class="card-action-list">
@@ -1046,9 +1081,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=15" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -1077,7 +1112,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-16.jpg" width="300" height="300" loading="lazy"
+                  <img src="./assests/images/product-16.jpg" width="300" height="300" loading="lazy"
                     alt="Vase Of Flowers" class="img-cover">
 
                   <ul class="card-action-list">
@@ -1089,9 +1124,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=16" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -1120,7 +1155,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-17.jpg" width="300" height="300" loading="lazy" alt="Wood Eggs"
+                  <img src="./assests/images/product-17.jpg" width="300" height="300" loading="lazy" alt="Wood Eggs"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -1132,9 +1167,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=17" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -1163,7 +1198,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-18.jpg" width="300" height="300" loading="lazy" alt="Wooden Box"
+                  <img src="./assests/images/product-18.jpg" width="300" height="300" loading="lazy" alt="Wooden Box"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -1175,9 +1210,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=18" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -1206,7 +1241,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="product-card">
 
                 <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
-                  <img src="./assets/images/product-19.jpg" width="300" height="300" loading="lazy" alt="Wooden Cups"
+                  <img src="./assests/images/product-19.jpg" width="300" height="300" loading="lazy" alt="Wooden Cups"
                     class="img-cover">
 
                   <ul class="card-action-list">
@@ -1218,9 +1253,9 @@ $cart_count = array_sum($_SESSION['cart']);
                     </li>
 
                     <li>
-                      <a href="?add_to_cart=19" class="card-action-btn" aria-label="add to cart" title="add to cart">
+                      <button class="card-action-btn" aria-label="add to cart" title="add to cart">
                         <ion-icon name="bag-handle-outline" aria-hidden="true"></ion-icon>
-                      </a>
+                      </button>
                     </li>
 
                     <li>
@@ -1277,7 +1312,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="blog-card">
 
                 <div class="card-banner img-holder" style="--width: 374; --height: 243;">
-                  <img src="./assets/images/blog-1.jpg" width="374" height="243" loading="lazy"
+                  <img src="./assests/images/blog-1.jpg" width="374" height="243" loading="lazy"
                     alt="Unique products that will impress your home in 2022." class="img-cover">
 
                   <a href="#" class="card-btn">
@@ -1318,7 +1353,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="blog-card">
 
                 <div class="card-banner img-holder" style="--width: 374; --height: 243;">
-                  <img src="./assets/images/blog-2.jpg" width="374" height="243" loading="lazy"
+                  <img src="./assests/images/blog-2.jpg" width="374" height="243" loading="lazy"
                     alt="Navy Blue & White Striped Area Rugs" class="img-cover">
 
                   <a href="#" class="card-btn">
@@ -1359,7 +1394,7 @@ $cart_count = array_sum($_SESSION['cart']);
               <div class="blog-card">
 
                 <div class="card-banner img-holder" style="--width: 374; --height: 243;">
-                  <img src="./assets/images/blog-3.jpg" width="374" height="243" loading="lazy"
+                  <img src="./assests/images/blog-3.jpg" width="374" height="243" loading="lazy"
                     alt="Woodex White Coated Staircase Floating" class="img-cover">
 
                   <a href="#" class="card-btn">
@@ -1601,7 +1636,7 @@ $cart_count = array_sum($_SESSION['cart']);
   <!-- 
     - custom js link
   -->
-  <script src="./assets/js/script.js" defer></script>
+  <script src="./assests/js/script.js" defer></script>
 
   <!-- 
     - ionicon link

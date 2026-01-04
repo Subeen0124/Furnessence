@@ -1,0 +1,149 @@
+/**
+ * PROFILE PAGE STYLES
+ */
+
+body {
+    padding-top: 100px;
+}
+
+.profile-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 15px;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, var(--medium-turquoise) 0%, var(--coquelicot) 100%);
+    padding: 40px;
+    border-radius: 15px;
+    color: var(--white);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.profile-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.profile-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.profile-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--eerie-black-1);
+}
+
+.quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.quick-link-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    background: var(--cultured);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--eerie-black-1);
+    transition: var(--transition-1);
+    flex: 1 1 calc(25% - 15px);
+    min-width: 150px;
+}
+
+.quick-link-btn:hover {
+    background: var(--medium-turquoise);
+    color: var(--white);
+    transform: translateY(-5px);
+}
+
+.quick-link-btn ion-icon {
+    font-size: 2.5rem;
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .profile-stats {
+        flex-direction: row;
+        gap: 20px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .quick-links {
+        flex-direction: column;
+    }
+    
+    .quick-link-btn {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-container {
+        padding: 20px 10px;
+    }
+    
+    .profile-header {
+        padding: 25px 20px;
+    }
+    
+    .profile-card {
+        padding: 20px;
+    }
+    
+    .quick-link-btn {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 15px 20px;
+    }
+    
+    .quick-link-btn ion-icon {
+        font-size: 2rem;
+    }
+}
