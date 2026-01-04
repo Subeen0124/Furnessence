@@ -36,8 +36,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Validate credentials
     if (empty($username_err) && empty($password_err)) {
-        // Prepare a select statement
-        $sql = "SELECT id, username, password FROM users WHERE username = ? AND status = 'active'";
+        // Prepare a select statement - CHECK FOR ADMIN ROLE
+        $sql = "SELECT id, username, password, role FROM users WHERE username = ? AND status = 'active' AND role = 'admin'";
 
         if ($stmt = mysqli_prepare($conn, $sql)) {
             // Bind variables to the prepared statement as parameters
@@ -54,16 +54,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Check if username exists, if yes then verify password
                 if (mysqli_stmt_num_rows($stmt) == 1) {
                     // Bind result variables
-                    mysqli_stmt_bind_result($stmt, $id, $username, $hashed_password);
+                    mysqli_stmt_bind_result($stmt, $id, $username, $hashed_password, $role);
                     if (mysqli_stmt_fetch($stmt)) {
                         if (password_verify($password, $hashed_password)) {
-                            // Password is correct, so start a new session
-                            session_start();
-
-                            // Store data in session variables
+                            // Password is correct, store data in session variables
                             $_SESSION["admin_logged_in"] = true;
                             $_SESSION["admin_id"] = $id;
                             $_SESSION["admin_username"] = $username;
+                            $_SESSION["admin_role"] = $role;
 
                             // Redirect user to admin dashboard
                             header("location: Admindashboard.php");
@@ -74,8 +72,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         }
                     }
                 } else {
-                    // Username doesn't exist, display a generic error message
-                    $login_err = "Invalid username or password.";
+                    // Username doesn't exist or not an admin, display a generic error message
+                    $login_err = "Invalid username or password. Admin access required.";
                 }
             } else {
                 echo "Oops! Something went wrong. Please try again later.";
@@ -97,86 +95,100 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Furnessence</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/auth.css">
     <style>
+        body {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .admin-login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            margin: 40px 20px;
+            padding: 50px 40px;
             background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            border-top: 4px solid var(--tan-crayola);
         }
 
         .admin-login-container h2 {
             text-align: center;
-            margin-bottom: 30px;
-            color: var(--tan-crayola);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: var(--fw-500);
+            margin-bottom: 35px;
             color: var(--smokey-black);
+            font-size: 2.8rem;
+            font-weight: var(--fw-700);
         }
 
-        .form-group input[type="text"],
-        .form-group input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--light-gray);
-            border-radius: 4px;
-            font-size: 1.6rem;
-            transition: var(--transition-1);
-        }
-
-        .form-group input[type="text"]:focus,
-        .form-group input[type="password"]:focus {
-            outline: none;
-            border-color: var(--tan-crayola);
-            box-shadow: 0 0 0 2px rgba(210, 180, 140, 0.2);
+        .admin-login-container h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--tan-crayola);
+            margin: 15px auto 0;
         }
 
         .error-message {
             color: var(--red-orange-color-wheel);
+            font-size: 1.3rem;
+            margin-top: 8px;
+            display: block;
+        }
+
+        .login-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 14px 18px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            border-left: 4px solid #dc3545;
             font-size: 1.4rem;
-            margin-top: 5px;
         }
 
         .btn-admin-login {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background-color: var(--tan-crayola);
             color: var(--white);
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 1.6rem;
-            font-weight: var(--fw-500);
+            font-weight: var(--fw-600);
             cursor: pointer;
             transition: var(--transition-1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .btn-admin-login:hover {
             background-color: var(--smokey-black);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
 
         .back-to-site {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--cultured);
         }
 
         .back-to-site a {
-            color: var(--tan-crayola);
+            color: var(--granite-gray);
             text-decoration: none;
+            font-size: 1.4rem;
+            font-weight: var(--fw-500);
+            transition: var(--transition-1);
         }
 
         .back-to-site a:hover {
-            text-decoration: underline;
+            color: var(--tan-crayola);
         }
     </style>
 </head>
@@ -186,23 +198,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <?php
         if (!empty($login_err)) {
-            echo '<div class="error-message">' . $login_err . '</div>';
+            echo '<div class="login-error">' . $login_err . '</div>';
         }
         ?>
 
         <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
             <div class="form-group">
                 <label>Username</label>
-                <input type="text" name="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>">
+                <input type="text" name="username" placeholder="Enter your username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>" autofocus>
                 <span class="error-message"><?php echo $username_err; ?></span>
             </div>
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" name="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>">
+                <input type="password" name="password" placeholder="Enter your password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>">
                 <span class="error-message"><?php echo $password_err; ?></span>
             </div>
             <div class="form-group">
-                <input type="submit" class="btn-admin-login" value="Login">
+                <button type="submit" class="btn-admin-login">Login</button>
             </div>
         </form>
 

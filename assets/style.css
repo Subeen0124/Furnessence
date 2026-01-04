@@ -19,6 +19,10 @@
   --manatee: hsl(218, 11%, 65%);
   --black: hsl(0, 0%, 0%);
   --white: hsl(0, 0%, 100%);
+  
+  /* Admin Panel Colors */
+  --green: #28A745;
+  --yellow: #FFD700;
 
   /**
    * typography

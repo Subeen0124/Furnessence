@@ -1,9 +1,16 @@
 <?php
 session_start();
 
-// Check if admin is logged in
+// Check if admin is logged in and has admin role
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header("location: AdminLogin.php");
+    header("location: Adminlogin.php");
+    exit();
+}
+
+// Additional security: verify admin role
+if (!isset($_SESSION['admin_role']) || $_SESSION['admin_role'] !== 'admin') {
+    session_destroy();
+    header("location: Adminlogin.php");
     exit();
 }
 
@@ -50,7 +57,8 @@ mysqli_close($conn);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Furnessence</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
     <style>
         .admin-dashboard {
             display: flex;
@@ -209,7 +217,7 @@ mysqli_close($conn);
         <div class="admin-sidebar">
             <h2>Admin Panel</h2>
             <ul>
-                <li><a href="dashboard.php" class="active">Dashboard</a></li>
+                <li><a href="Admindashboard.php" class="active">Dashboard</a></li>
                 <li><a href="manage-products.php">Manage Products</a></li>
                 <li><a href="manage-orders.php">Manage Orders</a></li>
                 <li><a href="manage-users.php">Manage Users</a></li>

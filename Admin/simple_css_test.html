@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple CSS Test</title>
+    <!-- Load CSS files -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/auth.css">
+    <style>
+        .debug-box {
+            border: 2px solid #333;
+            padding: 20px;
+            margin: 20px;
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-box">
+        <h1>CSS Test Page</h1>
+        <p>If you see this box with borders and padding, basic CSS is working.</p>
+    </div>
+
+    <div class="auth-container" style="max-width: 400px; margin: 20px auto;">
+        <h2 class="text-center">Login Form Test</h2>
+        <form class="auth-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+    </div>
+
+    <div class="debug-box">
+        <h3>CSS Loading Status:</h3>
+        <div id="css-status"></div>
+    </div>
+
+    <script>
+        // Check if CSS is loaded
+        const links = document.querySelectorAll('link[rel="stylesheet"]');
+        const statusDiv = document.getElementById('css-status');
+        let output = '';
+        
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            link.onload = () => {
+                output += `<p style="color: green;">✓ Loaded: ${href}</p>`;
+                statusDiv.innerHTML = output;
+            };
+            link.onerror = () => {
+                output += `<p style="color: red;">✗ Failed: ${href}</p>`;
+                statusDiv.innerHTML = output;
+            };
+        });
+
+        // Also check computed styles
+        setTimeout(() => {
+            const authContainer = document.querySelector('.auth-container');
+            if (authContainer) {
+                const styles = window.getComputedStyle(authContainer);
+                output += `<p><strong>Auth Container Background:</strong> ${styles.backgroundColor}</p>`;
+                output += `<p><strong>Auth Container Padding:</strong> ${styles.padding}</p>`;
+                statusDiv.innerHTML = output;
+            }
+        }, 500);
+    </script>
+</body>
+</html>

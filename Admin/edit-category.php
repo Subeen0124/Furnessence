@@ -3,7 +3,14 @@ session_start();
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header("location: AdminLogin.php");
+    header("location: Adminlogin.php");
+    exit();
+}
+
+// Verify admin role
+if (!isset($_SESSION['admin_role']) || $_SESSION['admin_role'] !== 'admin') {
+    session_destroy();
+    header("location: Adminlogin.php");
     exit();
 }
 
@@ -95,7 +102,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Category - Furnessence Admin</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
     <style>
         .admin-dashboard {
             display: flex;
