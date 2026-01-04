@@ -53,14 +53,41 @@ if ($action === 'add_to_wishlist') {
     }
     
 } elseif ($action === 'add_to_cart') {
+    // Check product stock availability
+    $stock_query = "SELECT stock_quantity, low_stock_threshold FROM products WHERE id = $product_id LIMIT 1";
+    $stock_result = mysqli_query($conn, $stock_query);
+    
+    if (mysqli_num_rows($stock_result) === 0) {
+        echo json_encode(['success' => false, 'message' => 'Product not found']);
+        exit();
+    }
+    
+    $stock_data = mysqli_fetch_assoc($stock_result);
+    $available_stock = $stock_data['stock_quantity'];
+    $low_stock_threshold = $stock_data['low_stock_threshold'];
+    
+    if ($available_stock <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Product is out of stock']);
+        exit();
+    }
+    
     if ($is_logged_in) {
         // For logged-in users, use database
         $check_query = "SELECT id, quantity FROM cart WHERE user_id = $user_id AND product_id = $product_id LIMIT 1";
         $check_result = mysqli_query($conn, $check_query);
         
         if (mysqli_num_rows($check_result) > 0) {
+            $cart_item = mysqli_fetch_assoc($check_result);
+            $new_quantity = $cart_item['quantity'] + 1;
+            
+            // Check if requested quantity exceeds stock
+            if ($new_quantity > $available_stock) {
+                echo json_encode(['success' => false, 'message' => "Only $available_stock items in stock"]);
+                exit();
+            }
+            
             // Update quantity
-            $update_query = "UPDATE cart SET quantity = quantity + 1 WHERE user_id = $user_id AND product_id = $product_id";
+            $update_query = "UPDATE cart SET quantity = $new_quantity WHERE user_id = $user_id AND product_id = $product_id";
             mysqli_query($conn, $update_query);
             $message = 'Quantity updated in cart!';
         } else {
@@ -84,7 +111,15 @@ if ($action === 'add_to_wishlist') {
         $found = false;
         foreach ($_SESSION['cart'] as &$item) {
             if ($item['product_id'] == $product_id) {
-                $item['quantity']++;
+                $new_quantity = $item['quantity'] + 1;
+                
+                // Check if requested quantity exceeds stock
+                if ($new_quantity > $available_stock) {
+                    echo json_encode(['success' => false, 'message' => "Only $available_stock items in stock"]);
+                    exit();
+                }
+                
+                $item['quantity'] = $new_quantity;
                 $found = true;
                 $message = 'Quantity updated in cart!';
                 break;
@@ -106,7 +141,18 @@ if ($action === 'add_to_wishlist') {
         $cart_count = count($_SESSION['cart']);
     }
     
-    echo json_encode(['success' => true, 'message' => $message, 'cart_count' => $cart_count]);
+    // Determine stock status message
+    $stock_status = '';
+    if ($available_stock <= $low_stock_threshold) {
+        $stock_status = " (Only $available_stock left!)";
+    }
+    
+    echo json_encode([
+        'success' => true, 
+        'message' => $message . $stock_status, 
+        'cart_count' => $cart_count,
+        'stock_available' => $available_stock
+    ]);
     
 } else {
     echo json_encode(['success' => false, 'message' => 'Invalid action']);

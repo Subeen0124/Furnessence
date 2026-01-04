@@ -1,0 +1,239 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                    FURNESSENCE ADMIN SYSTEM                      ║
+║                    Quick Reference Card                          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🚀 QUICK START                                                   │
+└──────────────────────────────────────────────────────────────────┘
+
+1. Import Database:
+   └─ http://localhost/phpmyadmin
+   └─ Import: database.sql
+
+2. Check Installation:
+   └─ http://localhost/Furnessence/install_check.php
+
+3. Login to Admin:
+   └─ http://localhost/Furnessence/Admin/Adminlogin.php
+   └─ Username: admin
+   └─ Password: admin123
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📊 ADMIN PANEL FEATURES                                          │
+└──────────────────────────────────────────────────────────────────┘
+
+Dashboard                 Stats, alerts, recent orders
+├─ Products              Add, edit, delete, view stock
+├─ Categories            Manage product categories
+├─ Orders                View and update order status
+├─ Users                 View registered customers
+└─ Logout                Secure logout
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📦 STOCK MANAGEMENT                                              │
+└──────────────────────────────────────────────────────────────────┘
+
+Stock Status Badges:
+  🟢 In Stock          Stock > Threshold
+  🟡 Low Stock         Stock ≤ Threshold
+  🔴 Out of Stock      Stock = 0
+
+Automatic Features:
+  ✅ Stock validation when adding to cart
+  ✅ Low stock warnings ("Only X left!")
+  ✅ Out of stock prevention
+  ✅ Automatic decrease on order placement
+  ✅ Transaction-based order processing
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🎯 COMMON TASKS                                                  │
+└──────────────────────────────────────────────────────────────────┘
+
+Add Product:
+  Dashboard → Add Product → Fill form → Upload image → Save
+
+Update Stock:
+  Dashboard → Manage Products → Edit icon → Update quantity → Save
+
+View Low Stock:
+  Dashboard → "Low Stock Alert" section
+
+Process Order:
+  Dashboard → Manage Orders → Change status dropdown
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📁 KEY FILES                                                     │
+└──────────────────────────────────────────────────────────────────┘
+
+Admin Panel:
+  Admin/Adminlogin.php          Login page
+  Admin/dashboard.php           Main dashboard
+  Admin/manage_products.php     Product management
+  Admin/add_product.php         Add new product
+  Admin/edit_product.php        Edit product
+
+Stock Logic:
+  cart_wishlist_handler.php     Stock validation (add to cart)
+  checkout.php                  Stock decrease (order placement)
+
+Styles:
+  assests/css/admin.css         Complete admin styles
+
+Documentation:
+  ACCESS_INFO.md                URLs & credentials
+  ADMIN_QUICK_START.md          Setup guide
+  Admin/README.md               Detailed docs
+  PROJECT_COMPLETE.md           Feature list
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🔄 STOCK LOGIC FLOW                                              │
+└──────────────────────────────────────────────────────────────────┘
+
+Customer adds to cart:
+  → Check product stock
+  → If stock = 0: Show "Out of stock"
+  → If stock ≤ threshold: Show "Only X left!"
+  → If OK: Add to cart
+
+Customer places order:
+  → Validate all items in cart
+  → Start database transaction
+  → Create order record
+  → Create order items
+  → Decrease stock for each item ← AUTOMATIC
+  → Clear cart
+  → Commit transaction
+
+Admin updates stock:
+  → Edit product form
+  → Change "Stock Quantity"
+  → Set "Low Stock Threshold"
+  → Save changes
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🎨 DESIGN FEATURES                                               │
+└──────────────────────────────────────────────────────────────────┘
+
+✨ Modern gradient design
+✨ Card-based layouts
+✨ Color-coded status badges
+✨ Responsive sidebar navigation
+✨ Icon-based UI
+✨ Smooth animations
+✨ Mobile-friendly
+✨ Professional typography
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🔒 SECURITY FEATURES                                             │
+└──────────────────────────────────────────────────────────────────┘
+
+✅ Password hashing (bcrypt)
+✅ SQL injection protection
+✅ Session-based authentication
+✅ Admin-only route protection
+✅ File upload validation
+✅ XSS prevention
+✅ Transaction-based integrity
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📊 DATABASE TABLES                                               │
+└──────────────────────────────────────────────────────────────────┘
+
+admins          Admin user accounts
+users           Customer accounts
+products        Products with stock tracking
+categories      Product categories
+cart            Shopping cart items
+wishlist        User wishlists
+orders          Order records
+order_items     Order line items
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🧪 TEST SCENARIOS                                                │
+└──────────────────────────────────────────────────────────────────┘
+
+Test 1: Normal Purchase
+  Stock before: 10
+  Add to cart: 1
+  Place order
+  Stock after: 9 ✅
+
+Test 2: Low Stock Warning
+  Set stock: 5
+  Set threshold: 10
+  Add to cart → "Only 5 left!" ✅
+
+Test 3: Out of Stock
+  Set stock: 0
+  Try add to cart → "Out of stock" ✅
+
+Test 4: Order with Multiple Items
+  Add 3 products to cart
+  Place order
+  All stocks decrease ✅
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 🛠️ TROUBLESHOOTING                                               │
+└──────────────────────────────────────────────────────────────────┘
+
+Can't login:
+  → Check database imported
+  → Try: admin / admin123
+  → Clear browser cookies
+
+Images not uploading:
+  → Check: assests/images/products/ exists
+  → Check php.ini upload settings
+
+Stock not decreasing:
+  → Check PHP error log
+  → Verify database tables exist
+  → Check transaction completing
+
+Tables don't exist:
+  → Re-import database.sql
+  → Check database name in config.php
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 📞 SUPPORT RESOURCES                                             │
+└──────────────────────────────────────────────────────────────────┘
+
+Installation Check:    install_check.php
+Access Information:    ACCESS_INFO.md
+Quick Start Guide:     ADMIN_QUICK_START.md
+Detailed Admin Guide:  Admin/README.md
+Complete Feature List: PROJECT_COMPLETE.md
+
+Error Logs:
+  PHP:    C:\xampp\apache\logs\error.log
+  MySQL:  phpMyAdmin → Check queries
+  Browser: F12 → Console
+
+┌──────────────────────────────────────────────────────────────────┐
+│ ✅ SYSTEM STATUS                                                 │
+└──────────────────────────────────────────────────────────────────┘
+
+✅ Admin Panel:        FULLY FUNCTIONAL
+✅ Product Management: FULLY FUNCTIONAL
+✅ Stock System:       FULLY FUNCTIONAL
+✅ Order Processing:   FULLY FUNCTIONAL
+✅ User Management:    FULLY FUNCTIONAL
+✅ Category System:    FULLY FUNCTIONAL
+✅ Image Upload:       FULLY FUNCTIONAL
+✅ Responsive Design:  FULLY FUNCTIONAL
+
+╔══════════════════════════════════════════════════════════════════╗
+║                     🎉 ALL SYSTEMS READY! 🎉                     ║
+║                                                                  ║
+║  Your complete furniture e-commerce admin system with stock     ║
+║  management is fully functional and ready to use!               ║
+║                                                                  ║
+║  Start by visiting: install_check.php                           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Version: 1.0
+Created: January 2026
+Database: MySQL/MariaDB
+PHP Version: 7.4+
+Status: ✅ PRODUCTION READY

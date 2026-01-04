@@ -51,25 +51,82 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
     } elseif (count($cart_items) === 0) {
         $error = "Your cart is empty.";
     } else {
-        // In a real application, you would:
-        // 1. Create orders table and order_items table
-        // 2. Insert order details
-        // 3. Insert order items
-        // 4. Process payment
-        // 5. Clear cart
-        // 6. Send confirmation email
+        // Start transaction
+        mysqli_begin_transaction($conn);
         
-        // For now, we'll simulate a successful order
-        $order_id = 'ORD-' . strtoupper(uniqid());
-        
-        // Clear cart
-        $clear_cart = "DELETE FROM cart WHERE user_id = $user_id";
-        mysqli_query($conn, $clear_cart);
-        
-        $success = "Order placed successfully! Order ID: $order_id";
-        
-        // Redirect to success page after 2 seconds
-        header("refresh:2;url=index.php?order_success=1&order_id=$order_id");
+        try {
+            // Check stock availability for all items
+            foreach ($cart_items as $item) {
+                $stock_check = "SELECT stock_quantity FROM products WHERE id = {$item['product_id']} LIMIT 1";
+                $stock_result = mysqli_query($conn, $stock_check);
+                
+                if (mysqli_num_rows($stock_result) > 0) {
+                    $stock_data = mysqli_fetch_assoc($stock_result);
+                    if ($stock_data['stock_quantity'] < $item['quantity']) {
+                        throw new Exception("Insufficient stock for {$item['product_name']}. Only {$stock_data['stock_quantity']} available.");
+                    }
+                } else {
+                    throw new Exception("Product {$item['product_name']} not found.");
+                }
+            }
+            
+            // Generate order number
+            $order_number = 'ORD-' . strtoupper(uniqid());
+            
+            // Build shipping address
+            $shipping_address = "$address, $city, $state $zip";
+            
+            // Insert order
+            $insert_order = "INSERT INTO orders (user_id, order_number, total_amount, status, shipping_address) 
+                VALUES ($user_id, '$order_number', $total, 'pending', '$shipping_address')";
+            
+            if (!mysqli_query($conn, $insert_order)) {
+                throw new Exception("Failed to create order");
+            }
+            
+            $order_id = mysqli_insert_id($conn);
+            
+            // Insert order items and update stock
+            foreach ($cart_items as $item) {
+                $product_id = $item['product_id'];
+                $product_name = mysqli_real_escape_string($conn, $item['product_name']);
+                $product_price = $item['product_price'];
+                $quantity = $item['quantity'];
+                $subtotal = $product_price * $quantity;
+                
+                // Insert order item
+                $insert_item = "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, subtotal) 
+                    VALUES ($order_id, $product_id, '$product_name', $product_price, $quantity, $subtotal)";
+                
+                if (!mysqli_query($conn, $insert_item)) {
+                    throw new Exception("Failed to add order items");
+                }
+                
+                // Decrease stock
+                $update_stock = "UPDATE products SET stock_quantity = stock_quantity - $quantity WHERE id = $product_id";
+                
+                if (!mysqli_query($conn, $update_stock)) {
+                    throw new Exception("Failed to update stock");
+                }
+            }
+            
+            // Clear cart
+            $clear_cart = "DELETE FROM cart WHERE user_id = $user_id";
+            mysqli_query($conn, $clear_cart);
+            
+            // Commit transaction
+            mysqli_commit($conn);
+            
+            $success = "Order placed successfully! Order ID: $order_number";
+            
+            // Redirect to success page after 2 seconds
+            header("refresh:2;url=index.php?order_success=1&order_id=$order_number");
+            
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            mysqli_rollback($conn);
+            $error = $e->getMessage();
+        }
     }
 }
 

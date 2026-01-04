@@ -49,6 +49,15 @@ $is_logged_in = isset($_SESSION['user_id']);
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
 
+// Get products from database
+$products_query = "SELECT p.*, c.name as category_name, c.slug as category_slug 
+                  FROM products p 
+                  LEFT JOIN categories c ON p.category_id = c.id 
+                  WHERE p.is_active = 1 
+                  ORDER BY p.created_at DESC 
+                  LIMIT 20";
+$products_result = mysqli_query($conn, $products_query);
+
 // Get wishlist count
 $wishlist_count = 0;
 $cart_count = 0;
