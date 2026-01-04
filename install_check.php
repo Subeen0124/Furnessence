@@ -4,168 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Furnessence - Installation Checker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 700px;
-            width: 100%;
-            padding: 40px;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-        
-        .subtitle {
-            color: #7f8c8d;
-            margin-bottom: 30px;
-        }
-        
-        .check-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            background: #f8f9fa;
-            border-left: 4px solid #ddd;
-        }
-        
-        .check-item.success {
-            background: #d4edda;
-            border-left-color: #28a745;
-        }
-        
-        .check-item.error {
-            background: #f8d7da;
-            border-left-color: #dc3545;
-        }
-        
-        .check-item .icon {
-            font-size: 24px;
-            margin-right: 15px;
-            width: 30px;
-        }
-        
-        .check-item.success .icon {
-            color: #28a745;
-        }
-        
-        .check-item.error .icon {
-            color: #dc3545;
-        }
-        
-        .check-item .text {
-            flex: 1;
-        }
-        
-        .check-item .label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 3px;
-        }
-        
-        .check-item .detail {
-            font-size: 13px;
-            color: #6c757d;
-        }
-        
-        .actions {
-            margin-top: 30px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        .section {
-            margin: 30px 0;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        .info-box {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        
-        .info-box h3 {
-            color: #004085;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-        
-        .info-box p {
-            color: #004085;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
-        
-        .info-box code {
-            background: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-            color: #e83e8c;
-        }
-    </style>
+    <link rel="stylesheet" href="./assests/css/install_check.css">
 </head>
 <body>
     <div class="container">
@@ -298,10 +137,10 @@
         
         <div class="section">
             <div class="section-title">Quick Links</div>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                <a href="ADMIN_QUICK_START.md" style="color: #667eea; text-decoration: none;">📖 Quick Start Guide</a>
-                <a href="Admin/README.md" style="color: #667eea; text-decoration: none;">📚 Admin Documentation</a>
-                <a href="PROJECT_COMPLETE.md" style="color: #667eea; text-decoration: none;">✨ Project Summary</a>
+            <div class="quick-links">
+                <a href="ADMIN_QUICK_START.md">📖 Quick Start Guide</a>
+                <a href="Admin/README.md">📚 Admin Documentation</a>
+                <a href="PROJECT_COMPLETE.md">✨ Project Summary</a>
             </div>
         </div>
     </div>

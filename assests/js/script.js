@@ -72,8 +72,19 @@ addEventOnElem(window, "scroll", activeElemOnScroll);
 
 const filterBtns = document.querySelectorAll("[data-filter-btn]");
 const filterItems = document.querySelectorAll("[data-filter]");
+const productList = document.querySelector(".product-list");
 
 let lastClickedFilterBtn = filterBtns[0];
+
+// Add initial-load class on page load
+if (productList) {
+  productList.classList.add("initial-load");
+  
+  // Remove initial-load class after animations complete
+  setTimeout(() => {
+    productList.classList.remove("initial-load");
+  }, 1500);
+}
 
 const filter = function () {
   lastClickedFilterBtn.classList.remove("active");
@@ -126,19 +137,7 @@ addEventOnElem(window, "scroll", showBackTopBtn);
 const productCards = document.querySelectorAll('.product-card');
 
 productCards.forEach(card => {
-  const cardTitle = card.querySelector('.card-title');
-  const cardPrice = card.querySelector('.price');
-  const cardImage = card.querySelector('.card-banner img');
   const actionButtons = card.querySelectorAll('.card-action-btn');
-  
-  if (!cardTitle || !cardPrice || !cardImage) return;
-  
-  const productData = {
-    id: Math.random().toString(36).substr(2, 9), // Generate unique ID
-    name: cardTitle.textContent.trim(),
-    price: parseFloat(cardPrice.getAttribute('value') || cardPrice.textContent.replace('$', '')),
-    image: cardImage.src
-  };
   
   actionButtons.forEach((btn, index) => {
     const icon = btn.querySelector('ion-icon');
@@ -146,6 +145,21 @@ productCards.forEach(card => {
     
     btn.addEventListener('click', function(e) {
       e.preventDefault();
+      
+      // Get product data from button data attributes
+      const productData = {
+        id: btn.getAttribute('data-product-id'),
+        name: btn.getAttribute('data-product-name'),
+        price: btn.getAttribute('data-product-price'),
+        image: btn.getAttribute('data-product-image')
+      };
+      
+      // Validate product data
+      if (!productData.id || !productData.name || !productData.price) {
+        console.error('Invalid product data:', productData);
+        showNotification('Invalid product data', 'error');
+        return;
+      }
       
       // Determine action based on button position or icon
       let action = '';
