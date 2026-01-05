@@ -883,28 +883,6 @@ if ($is_logged_in) {
 
         </ul>
 
-        <div class="footer-list">
-
-          <p class="footer-list-title">Newsletter</p>
-
-          <form action="" class="footer-form">
-            <input type="email" name="email_address" placeholder="Your email address" required class="email-field">
-
-            <button type="submit" class="footer-form-btn">
-              <ion-icon name="arrow-forward" aria-hidden="true"></ion-icon>
-            </button>
-          </form>
-
-          <div class="wrapper">
-
-            <a href="#" class="footer-link">Term & Condition</a>
-            <a href="#" class="footer-link">Policy</a>
-            <a href="#" class="footer-link">Map</a>
-
-          </div>
-
-        </div>
-
       </div>
 
       <div class="footer-bottom">

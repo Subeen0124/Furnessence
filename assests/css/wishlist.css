@@ -1,10 +1,11 @@
 /**
  * WISHLIST PAGE STYLES
+ * Matches index.php product card design
  */
 
 body {
     padding-top: 100px;
-    background: var(--cultured);
+    background: hsl(0, 0%, 95%);
 }
 
 .wishlist-container {
@@ -20,7 +21,7 @@ body {
 
 .page-header h1 {
     font-size: 2.5rem;
-    color: var(--eerie-black-1);
+    color: hsl(0, 0%, 13%);
     margin-bottom: 10px;
 }
 
@@ -28,14 +29,15 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    color: var(--medium-turquoise);
+    color: hsl(174, 64%, 61%);
     font-weight: 500;
     margin-bottom: 20px;
-    transition: var(--transition-1);
+    transition: 0.25s ease;
+    text-decoration: none;
 }
 
 .back-link:hover {
-    color: var(--coquelicot);
+    color: hsl(12, 100%, 50%);
 }
 
 .wishlist-grid {
@@ -44,108 +46,159 @@ body {
     gap: 30px;
 }
 
+/* Match product-card design from index.php */
 .wishlist-item {
-    background: var(--white);
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    transition: var(--transition-1);
+    position: relative;
+    text-align: center;
+    background-color: hsl(0, 0%, 100%);
+    border-radius: 5px;
+    padding: 15px;
+    transition: 0.25s ease;
 }
 
 .wishlist-item:hover {
+    box-shadow: 0 0 20px hsla(0, 0%, 0%, 0.1);
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Image container matching card-banner */
+.item-image-container {
+    position: relative;
+    margin-bottom: 20px;
+    overflow: hidden;
+    border-radius: 5px;
+}
+
+/* Dark overlay on hover */
+.item-image-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: hsl(0, 0%, 7%);
+    opacity: 0;
+    z-index: 1;
+    transition: 0.25s ease;
+}
+
+.wishlist-item:hover .item-image-container::before {
+    opacity: 0.5;
 }
 
 .item-image {
     width: 100%;
-    height: 250px;
+    height: 300px;
     object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    border-radius: 5px;
+    display: block;
+}
+
+/* Action buttons overlay on image (matching card-action-list) */
+.item-actions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    transition: 0.5s ease;
+    z-index: 2;
+}
+
+.wishlist-item:hover .item-actions {
+    opacity: 1;
+}
+
+/* Match card-action-btn styling */
+.action-btn {
+    background-color: hsl(0, 0%, 100%);
+    color: hsl(0, 0%, 7%);
+    padding: 12px;
+    border-radius: 50%;
+    transition: 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    width: 44px;
+    height: 44px;
+}
+
+.action-btn ion-icon {
+    font-size: 20px;
+}
+
+.action-btn:hover {
+    background-color: hsl(174, 64%, 61%);
+    color: hsl(0, 0%, 100%);
+}
+
+.btn-remove:hover {
+    background-color: hsl(12, 100%, 50%);
+}
+
+/* Product details matching card-content */
+.item-details {
+    text-align: center;
 }
 
 .item-details h3 {
     font-size: 1.2rem;
     margin-bottom: 10px;
-    color: var(--eerie-black-1);
+    color: hsl(0, 0%, 13%);
+    transition: 0.25s ease;
 }
 
+.item-details h3:hover {
+    color: hsl(174, 64%, 61%);
+}
+
+/* Match card-price styling */
 .item-price {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--coquelicot);
-    margin-bottom: 15px;
-}
-
-.item-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.action-btn {
-    flex: 1;
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 0.9rem;
+    color: hsl(12, 100%, 50%);
+    font-size: 1.8rem;
     font-weight: 500;
-    transition: var(--transition-1);
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 5px;
-}
-
-.btn-cart {
-    background: var(--medium-turquoise);
-    color: var(--white);
-}
-
-.btn-cart:hover {
-    background: var(--coquelicot);
-}
-
-.btn-remove {
-    background: var(--silver-chalice);
-    color: var(--white);
-}
-
-.btn-remove:hover {
-    background: var(--coquelicot);
+    align-items: center;
+    gap: 10px;
 }
 
 .empty-wishlist {
     text-align: center;
     padding: 60px 20px;
-    background: var(--white);
+    background: hsl(0, 0%, 100%);
     border-radius: 15px;
 }
 
 .empty-wishlist ion-icon {
     font-size: 80px;
-    color: var(--silver-chalice);
+    color: hsl(0, 0%, 70%);
     margin-bottom: 20px;
 }
 
 .empty-wishlist h2 {
     font-size: 1.8rem;
     margin-bottom: 10px;
-    color: var(--eerie-black-1);
+    color: hsl(0, 0%, 13%);
 }
 
 .shop-btn {
     display: inline-block;
     margin-top: 20px;
     padding: 12px 30px;
-    background: var(--medium-turquoise);
-    color: var(--white);
+    background: hsl(174, 64%, 61%);
+    color: hsl(0, 0%, 100%);
     border-radius: 5px;
     font-weight: 500;
-    transition: var(--transition-1);
+    transition: 0.25s ease;
+    text-decoration: none;
 }
 
 .shop-btn:hover {
-    background: var(--coquelicot);
+    background: hsl(12, 100%, 50%);
 }
 
 .alert {
@@ -167,4 +220,39 @@ body {
     background: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding-top: 80px;
+    }
+    
+    .wishlist-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .page-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .wishlist-container {
+        padding: 20px 10px;
+    }
+    
+    .wishlist-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .item-image {
+        height: 250px;
+    }
 }

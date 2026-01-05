@@ -77,7 +77,7 @@ $cart_count = mysqli_fetch_assoc($cart_result)['count'];
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assests/css/style.css">
-    <link rel="stylesheet" href="./assests/css/wishlist.css">
+    <link rel="stylesheet" href="./assests/css/wishlist.css?v=2.0">
     
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
@@ -114,21 +114,30 @@ $cart_count = mysqli_fetch_assoc($cart_result)['count'];
             <div class="wishlist-grid">
                 <?php while ($item = mysqli_fetch_assoc($wishlist_result)): ?>
                     <div class="wishlist-item">
-                        <img src="<?php echo htmlspecialchars($item['product_image']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="item-image">
+                        
+                        <div class="item-image-container">
+                            <img src="<?php echo htmlspecialchars($item['product_image']); ?>" 
+                                 alt="<?php echo htmlspecialchars($item['product_name']); ?>" 
+                                 class="item-image">
+                            
+                            <div class="item-actions">
+                                <a href="?move_to_cart=<?php echo $item['id']; ?>" 
+                                   class="action-btn btn-cart" 
+                                   title="Add to Cart">
+                                    <ion-icon name="bag-handle-outline"></ion-icon>
+                                </a>
+                                <a href="?remove=<?php echo $item['id']; ?>" 
+                                   class="action-btn btn-remove" 
+                                   onclick="return confirm('Remove this item from wishlist?')"
+                                   title="Remove">
+                                    <ion-icon name="trash-outline"></ion-icon>
+                                </a>
+                            </div>
+                        </div>
                         
                         <div class="item-details">
                             <h3><?php echo htmlspecialchars($item['product_name']); ?></h3>
                             <div class="item-price">$<?php echo number_format($item['product_price'], 2); ?></div>
-                            
-                            <div class="item-actions">
-                                <a href="?move_to_cart=<?php echo $item['id']; ?>" class="action-btn btn-cart">
-                                    <ion-icon name="cart"></ion-icon>
-                                    Add to Cart
-                                </a>
-                                <a href="?remove=<?php echo $item['id']; ?>" class="action-btn btn-remove" onclick="return confirm('Remove this item from wishlist?')">
-                                    <ion-icon name="trash"></ion-icon>
-                                </a>
-                            </div>
                         </div>
                     </div>
                 <?php endwhile; ?>

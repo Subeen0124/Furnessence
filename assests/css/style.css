@@ -133,6 +133,7 @@ body {
   color: var(--onyx);
   font-size: 1.6rem;
   line-height: 1.7;
+  overflow-x: hidden;
 }
 
 :focus-visible { outline-offset: 4px; }
@@ -546,7 +547,10 @@ body {
   #HERO
 \*-----------------------------------*/
 
-.hero { padding-block-start: calc(var(--section-padding) + 60px); }
+.hero { 
+  padding-block-start: calc(var(--section-padding) + 60px);
+  overflow-x: hidden;
+}
 
 .hero-list {
   display: flex;
@@ -1187,19 +1191,27 @@ body {
   margin-inline: auto;
   display: flex;
   flex-direction: row;
-  gap: 15px;
-  align-items: center;
+  gap: 0;
+  align-items: stretch;
+  position: relative;
+  width: 100%;
+  background-color: var(--white);
+  border-radius: 35px;
+  padding: 5px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .newsletter .email-field {
-  background-color: var(--white);
+  background-color: transparent;
   color: var(--eerie-black-1);
   font-size: var(--fs-5);
-  padding: 15px 25px;
+  padding: 12px 20px;
   border-radius: 30px;
   flex: 1;
-  border: 2px solid transparent;
+  min-width: 0;
+  border: none;
   transition: var(--transition-1);
+  outline: none;
 }
 
 .newsletter .email-field::placeholder {
@@ -1207,9 +1219,8 @@ body {
 }
 
 .newsletter .email-field:focus {
-  border-color: var(--medium-turquoise);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(95, 204, 219, 0.1);
+  box-shadow: none;
 }
 
 .newsletter-btn {
@@ -1222,15 +1233,27 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 50px;
-  min-height: 50px;
+  min-width: 45px;
+  max-width: 45px;
+  min-height: 45px;
+  max-height: 45px;
+  width: 45px;
+  height: 45px;
   padding: 0;
   flex-shrink: 0;
   cursor: pointer;
+  position: relative;
+  border: none;
+  margin: 0;
 }
 
 .newsletter-btn ion-icon {
-  font-size: 22px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  --ionicon-stroke-width: 45px;
 }
 
 .newsletter-btn:is(:hover, :focus) { 
