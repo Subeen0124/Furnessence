@@ -120,8 +120,8 @@ $items_result = mysqli_query($conn, $items_query);
                                         <td>$<?php echo number_format($item['subtotal'], 2); ?></td>
                                     </tr>
                                 <?php endwhile; ?>
-                                <tr style="background: #f8f9fa; font-weight: 600;">
-                                    <td colspan="3" style="text-align: right;">Total:</td>
+                                <tr class="order-total-row">
+                                    <td colspan="3" class="total-label">Total:</td>
                                     <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
                                 </tr>
                             </tbody>
@@ -132,11 +132,11 @@ $items_result = mysqli_query($conn, $items_query);
                 <!-- Order Info Sidebar -->
                 <div>
                     <!-- Customer Information -->
-                    <div class="table-card" style="margin-bottom: 20px;">
+                    <div class="table-card order-info-card">
                         <div class="card-header">
                             <h2><i class="fas fa-user"></i> Customer</h2>
                         </div>
-                        <div style="padding: 20px;">
+                        <div class="card-content">
                             <div class="detail-row">
                                 <span class="detail-label">Name:</span>
                                 <span class="detail-value"><?php echo htmlspecialchars($order['user_name']); ?></span>
@@ -149,21 +149,21 @@ $items_result = mysqli_query($conn, $items_query);
                     </div>
                     
                     <!-- Order Status -->
-                    <div class="table-card" style="margin-bottom: 20px;">
+                    <div class="table-card order-info-card">
                         <div class="card-header">
                             <h2><i class="fas fa-info-circle"></i> Status</h2>
                         </div>
-                        <div style="padding: 20px;">
+                        <div class="card-content">
                             <form method="POST" action="manage_orders.php">
                                 <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
                                 <input type="hidden" name="update_status" value="1">
-                                <select name="status" class="form-group" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: 8px;">
+                                <select name="status" class="form-group status-select">
                                     <option value="pending" <?php echo $order['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
                                     <option value="processing" <?php echo $order['status'] == 'processing' ? 'selected' : ''; ?>>Processing</option>
                                     <option value="completed" <?php echo $order['status'] == 'completed' ? 'selected' : ''; ?>>Completed</option>
                                     <option value="cancelled" <?php echo $order['status'] == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                 </select>
-                                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">
+                                <button type="submit" class="btn-primary btn-full-width">
                                     <i class="fas fa-save"></i> Update Status
                                 </button>
                             </form>
@@ -175,8 +175,8 @@ $items_result = mysqli_query($conn, $items_query);
                         <div class="card-header">
                             <h2><i class="fas fa-map-marker-alt"></i> Shipping</h2>
                         </div>
-                        <div style="padding: 20px;">
-                            <p style="line-height: 1.8; color: var(--dark-color);">
+                        <div class="card-content">
+                            <p class="shipping-address">
                                 <?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?>
                             </p>
                         </div>

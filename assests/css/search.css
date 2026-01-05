@@ -1,0 +1,113 @@
+/**
+ * SEARCH PAGE STYLES
+ */
+
+.search-page {
+    padding-top: 120px;
+    padding-bottom: 60px;
+    min-height: 100vh;
+    background: hsl(0, 0%, 98%);
+}
+
+.search-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.search-header h1 {
+    font-size: 2rem;
+    color: var(--eerie-black-1);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.search-info {
+    font-size: 1.1rem;
+    color: var(--onyx);
+}
+
+.search-query {
+    color: var(--medium-turquoise);
+    font-weight: 600;
+}
+
+/* Use existing grid-list and product-list styles from main CSS */
+.search-results {
+    /* Grid-list and product-card styles already defined in main style.css */
+}
+
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--white);
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    grid-column: 1 / -1;
+}
+
+.no-results ion-icon {
+    font-size: 80px;
+    color: var(--silver-chalice);
+    margin-bottom: 20px;
+}
+
+.no-results h2 {
+    font-size: 1.8rem;
+    color: var(--eerie-black-1);
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.no-results p {
+    font-size: 1.1rem;
+    color: var(--onyx);
+    margin-bottom: 25px;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 30px;
+    background: var(--medium-turquoise);
+    color: var(--white);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: var(--transition-1);
+}
+
+.back-btn:hover {
+    background: hsl(174, 64%, 55%);
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-page {
+        padding-top: 100px;
+        padding-bottom: 40px;
+    }
+    
+    .search-header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .search-info {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .no-results {
+        padding: 40px 15px;
+    }
+    
+    .no-results ion-icon {
+        font-size: 60px;
+    }
+    
+    .no-results h2 {
+        font-size: 1.5rem;
+    }
+}

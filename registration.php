@@ -232,20 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
     </div>
     
-    <script>
-        function togglePassword(inputId, iconId) {
-            const passwordInput = document.getElementById(inputId);
-            const toggleIcon = document.getElementById(iconId);
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.name = 'eye-off-outline';
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.name = 'eye-outline';
-            }
-        }
-    </script>
+    <script src="./assests/js/auth.js"></script>
     
 </body>
 </html>

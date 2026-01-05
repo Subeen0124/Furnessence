@@ -223,20 +223,7 @@ $remembered_email = isset($_COOKIE['user_email']) ? $_COOKIE['user_email'] : '';
         
     </div>
     
-    <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('toggle-icon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.name = 'eye-off-outline';
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.name = 'eye-outline';
-            }
-        }
-    </script>
+    <script src="./assests/js/auth.js"></script>
     
 </body>
 </html>

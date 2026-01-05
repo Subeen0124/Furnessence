@@ -40,7 +40,7 @@ $products_query = "SELECT p.*, c.name as category_name
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
     $where_clause 
-    ORDER BY p.created_at DESC";
+    ORDER BY p.id ASC";
 $products_result = mysqli_query($conn, $products_query);
 
 // Get categories for filter

@@ -10,14 +10,9 @@
             <span>Dashboard</span>
         </a>
         
-        <a href="manage_products.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage_products.php' ? 'active' : ''; ?>">
+        <a href="manage_products.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage_products.php' || basename($_SERVER['PHP_SELF']) == 'add_product.php' || basename($_SERVER['PHP_SELF']) == 'edit_product.php' ? 'active' : ''; ?>">
             <i class="fas fa-box"></i>
             <span>Products</span>
-        </a>
-        
-        <a href="add_product.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'add_product.php' ? 'active' : ''; ?>">
-            <i class="fas fa-plus-circle"></i>
-            <span>Add Product</span>
         </a>
         
         <a href="manage_categories.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'manage_categories.php' ? 'active' : ''; ?>">

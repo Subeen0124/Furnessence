@@ -133,92 +133,97 @@ addEventOnElem(window, "scroll", showBackTopBtn);
  * Add to Cart and Wishlist functionality
  */
 
-// Get all product cards
-const productCards = document.querySelectorAll('.product-card');
+function initializeProductCards() {
+  // Get all product cards
+  const productCards = document.querySelectorAll('.product-card');
 
-productCards.forEach(card => {
-  const actionButtons = card.querySelectorAll('.card-action-btn');
-  
-  actionButtons.forEach((btn, index) => {
-    const icon = btn.querySelector('ion-icon');
-    const iconName = icon ? icon.getAttribute('name') : '';
+  productCards.forEach(card => {
+    const actionButtons = card.querySelectorAll('.card-action-btn');
     
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
+    actionButtons.forEach((btn, index) => {
+      const icon = btn.querySelector('ion-icon');
+      const iconName = icon ? icon.getAttribute('name') : '';
       
-      // Get product data from button data attributes
-      const productData = {
-        id: btn.getAttribute('data-product-id'),
-        name: btn.getAttribute('data-product-name'),
-        price: btn.getAttribute('data-product-price'),
-        image: btn.getAttribute('data-product-image')
-      };
-      
-      // Validate product data
-      if (!productData.id || !productData.name || !productData.price) {
-        console.error('Invalid product data:', productData);
-        showNotification('Invalid product data', 'error');
-        return;
-      }
-      
-      // Determine action based on button position or icon
-      let action = '';
-      if (iconName.includes('bag') || iconName.includes('cart')) {
-        action = 'add_to_cart';
-      } else if (iconName.includes('heart')) {
-        action = 'add_to_wishlist';
-      } else if (index === 1) {
-        action = 'add_to_cart';
-      } else if (index === 2) {
-        action = 'add_to_wishlist';
-      }
-      
-      if (!action) return;
-      
-      // Send AJAX request
-      const formData = new FormData();
-      formData.append('action', action);
-      formData.append('product_id', productData.id);
-      formData.append('product_name', productData.name);
-      formData.append('product_price', productData.price);
-      formData.append('product_image', productData.image);
-      
-      fetch('cart_wishlist_handler.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Show success message
-          showNotification(data.message, 'success');
-          
-          // Update badge counts
-          if (data.wishlist_count !== undefined) {
-            updateBadge('wishlist', data.wishlist_count);
-          }
-          if (data.cart_count !== undefined) {
-            updateBadge('cart', data.cart_count);
-          }
-        } else {
-          if (data.message.includes('login')) {
-            // Redirect to login
-            showNotification('Please login to continue', 'error');
-            setTimeout(() => {
-              window.location.href = 'login.php';
-            }, 1500);
-          } else {
-            showNotification(data.message, 'error');
-          }
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Get product data from button data attributes
+        const productData = {
+          id: btn.getAttribute('data-product-id'),
+          name: btn.getAttribute('data-product-name'),
+          price: btn.getAttribute('data-product-price'),
+          image: btn.getAttribute('data-product-image')
+        };
+        
+        // Validate product data
+        if (!productData.id || !productData.name || !productData.price) {
+          console.error('Invalid product data:', productData);
+          showNotification('Invalid product data', 'error');
+          return;
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred. Please try again.', 'error');
+        
+        // Determine action based on button position or icon
+        let action = '';
+        if (iconName.includes('bag') || iconName.includes('cart')) {
+          action = 'add_to_cart';
+        } else if (iconName.includes('heart')) {
+          action = 'add_to_wishlist';
+        } else if (index === 1) {
+          action = 'add_to_cart';
+        } else if (index === 2) {
+          action = 'add_to_wishlist';
+        }
+        
+        if (!action) return;
+        
+        // Send AJAX request
+        const formData = new FormData();
+        formData.append('action', action);
+        formData.append('product_id', productData.id);
+        formData.append('product_name', productData.name);
+        formData.append('product_price', productData.price);
+        formData.append('product_image', productData.image);
+        
+        fetch('cart_wishlist_handler.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Show success message
+            showNotification(data.message, 'success');
+            
+            // Update badge counts
+            if (data.wishlist_count !== undefined) {
+              updateBadge('wishlist', data.wishlist_count);
+            }
+            if (data.cart_count !== undefined) {
+              updateBadge('cart', data.cart_count);
+            }
+          } else {
+            if (data.message.includes('login')) {
+              // Redirect to login
+              showNotification('Please login to continue', 'error');
+              setTimeout(() => {
+                window.location.href = 'login.php';
+              }, 1500);
+            } else {
+              showNotification(data.message, 'error');
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showNotification('An error occurred. Please try again.', 'error');
+        });
       });
     });
   });
-});
+}
+
+// Initialize on page load
+initializeProductCards();
 
 // Update badge count
 function updateBadge(type, count) {
@@ -281,3 +286,54 @@ function showNotification(message, type = 'success') {
     }, 300);
   }, 3000);
 }
+
+
+
+/**
+ * USER DROPDOWN MENU
+ */
+
+const userDropdownBtn = document.querySelector('[data-user-dropdown-btn]');
+const userDropdownMenu = document.querySelector('[data-user-dropdown]');
+
+console.log('User Dropdown Button:', userDropdownBtn);
+console.log('User Dropdown Menu:', userDropdownMenu);
+
+if (userDropdownBtn && userDropdownMenu) {
+  console.log('User dropdown initialized');
+  
+  // Toggle dropdown on button click
+  userDropdownBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Button clicked!');
+    const isActive = userDropdownMenu.classList.toggle('active');
+    console.log('Dropdown active:', isActive);
+    userDropdownBtn.setAttribute('aria-expanded', isActive.toString());
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    const wrapper = document.querySelector('.user-dropdown-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      userDropdownMenu.classList.remove('active');
+      userDropdownBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Close dropdown on ESC key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && userDropdownMenu.classList.contains('active')) {
+      userDropdownMenu.classList.remove('active');
+      userDropdownBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Prevent dropdown from closing when clicking inside it
+  userDropdownMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+} else {
+  console.log('User dropdown elements not found!');
+}
+

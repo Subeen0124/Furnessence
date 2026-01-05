@@ -14,9 +14,4 @@
     </div>
 </div>
 
-<script>
-function toggleSidebar() {
-    document.querySelector('.admin-sidebar').classList.toggle('collapsed');
-    document.querySelector('.admin-main').classList.toggle('expanded');
-}
-</script>
+<script src="js/admin.js"></script>

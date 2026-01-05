@@ -124,14 +124,14 @@ $cart_count = mysqli_fetch_assoc($cart_result)['count'];
         </div>
         
         <?php if (!empty($error)): ?>
-            <div class="alert alert-error" style="margin-bottom: 20px;">
+            <div class="alert alert-error">
                 <ion-icon name="alert-circle"></ion-icon>
                 <span><?php echo $error; ?></span>
             </div>
         <?php endif; ?>
         
         <?php if (!empty($success)): ?>
-            <div class="alert alert-success" style="margin-bottom: 20px;">
+            <div class="alert alert-success">
                 <ion-icon name="checkmark-circle"></ion-icon>
                 <span><?php echo $success; ?></span>
             </div>

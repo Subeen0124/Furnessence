@@ -942,3 +942,51 @@ body.admin-body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===============================
+   ADDITIONAL UTILITY STYLES
+   =============================== */
+
+/* Inline form for delete buttons */
+.inline-form {
+    display: inline;
+}
+
+/* Order info cards */
+.order-info-card {
+    margin-bottom: 20px;
+}
+
+.card-content {
+    padding: 20px;
+}
+
+/* Order total row */
+.order-total-row {
+    background: #f8f9fa;
+    font-weight: 600;
+}
+
+.order-total-row .total-label {
+    text-align: right;
+}
+
+/* Status select */
+.status-select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+}
+
+/* Full width button */
+.btn-full-width {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Shipping address */
+.shipping-address {
+    line-height: 1.8;
+    color: var(--dark-color);
+}

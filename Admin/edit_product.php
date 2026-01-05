@@ -247,21 +247,6 @@ $categories_result = mysqli_query($conn, $categories_query);
         </div>
     </div>
     
-    <script>
-    function previewImage(input) {
-        const preview = document.getElementById('image-preview');
-        preview.innerHTML = '';
-        
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                preview.appendChild(img);
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-    </script>
+    <script src="js/admin.js"></script>
 </body>
 </html>

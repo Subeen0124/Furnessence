@@ -153,7 +153,7 @@ if ($is_logged_in) {
                                 <div class="item-price">$<?php echo number_format($item['product_price'], 2); ?></div>
                                 
                                 <div class="quantity-controls">
-                                    <form method="POST" style="display: inline;">
+                                    <form method="POST" class="qty-form">
                                         <?php if ($is_logged_in): ?>
                                             <input type="hidden" name="cart_id" value="<?php echo $item['id']; ?>">
                                         <?php else: ?>
@@ -167,7 +167,7 @@ if ($is_logged_in) {
                                     
                                     <input type="text" value="<?php echo $item['quantity']; ?>" class="qty-input" readonly>
                                     
-                                    <form method="POST" style="display: inline;">
+                                    <form method="POST" class="qty-form">
                                         <?php if ($is_logged_in): ?>
                                             <input type="hidden" name="cart_id" value="<?php echo $item['id']; ?>">
                                         <?php else: ?>
@@ -179,7 +179,7 @@ if ($is_logged_in) {
                                         </button>
                                     </form>
                                     
-                                    <span style="margin-left: 15px; font-weight: 500;">
+                                    <span class="item-subtotal">
                                         Subtotal: $<?php echo number_format($item['product_price'] * $item['quantity'], 2); ?>
                                     </span>
                                 </div>

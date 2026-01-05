@@ -4,7 +4,7 @@ requireAdminLogin();
 
 $admin = getAdminInfo();
 
-$users_query = "SELECT * FROM users ORDER BY created_at DESC";
+$users_query = "SELECT * FROM users ORDER BY id ASC";
 $users_result = mysqli_query($conn, $users_query);
 ?>
 <!DOCTYPE html>

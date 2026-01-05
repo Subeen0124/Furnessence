@@ -1,78 +1,112 @@
 /**
- * PROFILE PAGE STYLES
+ * PROFILE PAGE STYLES - GRID LAYOUT
  */
 
 body {
     padding-top: 100px;
+    background: hsl(0, 0%, 96%);
 }
 
 .profile-container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 30px 15px;
+    display: grid;
+    gap: 30px;
+    grid-template-columns: 1fr;
 }
 
 .profile-header {
-    background: linear-gradient(135deg, var(--medium-turquoise) 0%, var(--coquelicot) 100%);
+    background: linear-gradient(135deg, var(--medium-turquoise) 0%, hsl(174, 64%, 55%) 100%);
     padding: 40px;
     border-radius: 15px;
     color: var(--white);
-    margin-bottom: 30px;
     text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    grid-column: 1 / -1;
 }
 
 .profile-header h1 {
     font-size: 2.5rem;
     margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.profile-header p {
+    font-size: 1.1rem;
+    opacity: 0.95;
 }
 
 .profile-stats {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .stat-item {
     text-align: center;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 20px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    transition: var(--transition-1);
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-3px);
 }
 
 .stat-number {
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 5px;
 }
 
 .stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
+    font-size: 0.95rem;
+    opacity: 0.95;
+    font-weight: 500;
 }
 
 .profile-content {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 30px;
+    grid-column: 1 / -1;
 }
 
 .profile-card {
-    display: flex;
-    flex-direction: column;
     background: var(--white);
     padding: 30px;
     border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    transition: var(--transition-1);
+}
+
+.profile-card:hover {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    transform: translateY(-5px);
 }
 
 .profile-card h2 {
     font-size: 1.5rem;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     color: var(--eerie-black-1);
+    font-weight: 600;
+    border-bottom: 2px solid var(--medium-turquoise);
+    padding-bottom: 10px;
 }
 
 .quick-links {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
-    justify-content: space-between;
 }
 
 .quick-link-btn {
@@ -80,70 +114,159 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 20px;
-    background: var(--cultured);
-    border-radius: 10px;
+    gap: 12px;
+    padding: 25px 20px;
+    background: linear-gradient(145deg, hsl(0, 0%, 98%), hsl(0, 0%, 95%));
+    border-radius: 12px;
     text-decoration: none;
     color: var(--eerie-black-1);
     transition: var(--transition-1);
-    flex: 1 1 calc(25% - 15px);
-    min-width: 150px;
+    border: 2px solid transparent;
 }
 
 .quick-link-btn:hover {
     background: var(--medium-turquoise);
     color: var(--white);
     transform: translateY(-5px);
+    border-color: var(--medium-turquoise);
+    box-shadow: 0 8px 20px rgba(94, 200, 189, 0.3);
 }
 
 .quick-link-btn ion-icon {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
 }
-/* Responsive adjustments */
+
+.quick-link-btn span {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+/* Grid Responsive Adjustments */
+@media (min-width: 1024px) {
+    .profile-content {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .profile-card:first-child {
+        grid-column: 1 / -1;
+    }
+}
+
 @media (max-width: 768px) {
+    .profile-container {
+        grid-template-columns: 1fr;
+        padding: 20px 15px;
+    }
+    
+    .profile-header {
+        padding: 30px 25px;
+    }
+    
     .profile-header h1 {
-        font-size: 1.8rem;
+        font-size: 2rem;
     }
     
     .profile-stats {
-        flex-direction: row;
-        gap: 20px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        max-width: 400px;
     }
     
     .stat-number {
-        font-size: 1.5rem;
+        font-size: 2rem;
+    }
+    
+    .profile-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
     
     .quick-links {
-        flex-direction: column;
-    }
-    
-    .quick-link-btn {
-        flex: 1 1 100%;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 }
 
 @media (max-width: 480px) {
     .profile-container {
-        padding: 20px 10px;
+        padding: 15px 10px;
     }
     
     .profile-header {
         padding: 25px 20px;
+        border-radius: 12px;
+    }
+    
+    .profile-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .profile-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .stat-item {
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
     }
     
     .profile-card {
         padding: 20px;
+        border-radius: 12px;
+    }
+    
+    .profile-card h2 {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+    }
+    
+    .quick-links {
+        grid-template-columns: 1fr;
     }
     
     .quick-link-btn {
         flex-direction: row;
         justify-content: flex-start;
-        padding: 15px 20px;
+        gap: 15px;
+        padding: 18px 20px;
     }
     
     .quick-link-btn ion-icon {
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
+    
+    .quick-link-btn span {
+        font-size: 1rem;
+    }
+}
+
+/* Alert styles */
+.alert {
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.alert-error {
+    background: #fee;
+    color: #c33;
+    border: 1px solid #fcc;
+}
+
+.alert-success {
+    background: #efe;
+    color: #3c3;
+    border: 1px solid #cfc;
 }

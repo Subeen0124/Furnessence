@@ -16,7 +16,7 @@ if (isset($_POST['update_status'])) {
 $orders_query = "SELECT o.*, u.name as user_name, u.email as user_email 
     FROM orders o 
     LEFT JOIN users u ON o.user_id = u.id 
-    ORDER BY o.created_at DESC";
+    ORDER BY o.id ASC";
 $orders_result = mysqli_query($conn, $orders_query);
 ?>
 <!DOCTYPE html>
@@ -66,7 +66,7 @@ $orders_result = mysqli_query($conn, $orders_query);
                                         <td><?php echo htmlspecialchars($order['user_email']); ?></td>
                                         <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
                                         <td>
-                                            <form method="POST" style="display:inline;">
+                                            <form method="POST" class="inline-form">
                                                 <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
                                                 <select name="status" onchange="this.form.submit()" class="status-select">
                                                     <option value="pending" <?php echo $order['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>

@@ -234,3 +234,12 @@ body {
         height: 200px;
     }
 }
+/* Quantity form and subtotal styles */
+.qty-form {
+    display: inline;
+}
+
+.item-subtotal {
+    margin-left: 15px;
+    font-weight: 500;
+}

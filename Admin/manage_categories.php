@@ -26,7 +26,7 @@ $categories_query = "SELECT c.*, COUNT(p.id) as product_count
     FROM categories c 
     LEFT JOIN products p ON c.id = p.category_id 
     GROUP BY c.id 
-    ORDER BY c.name ASC";
+    ORDER BY c.id ASC";
 $categories_result = mysqli_query($conn, $categories_query);
 ?>
 <!DOCTYPE html>
@@ -78,7 +78,7 @@ $categories_result = mysqli_query($conn, $categories_query);
                                     <td><?php echo $cat['product_count']; ?></td>
                                     <td><?php echo date('M d, Y', strtotime($cat['created_at'])); ?></td>
                                     <td class="actions">
-                                        <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this category?');">
+                                        <form method="POST" class="inline-form" data-confirm="Delete this category?">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?php echo $cat['id']; ?>">
                                             <button type="submit" class="btn-action btn-delete">
@@ -115,13 +115,6 @@ $categories_result = mysqli_query($conn, $categories_query);
         </div>
     </div>
     
-    <script>
-    function showAddModal() {
-        document.getElementById('addModal').style.display = 'block';
-    }
-    function closeModal() {
-        document.getElementById('addModal').style.display = 'none';
-    }
-    </script>
+    <script src="js/admin.js"></script>
 </body>
 </html>
