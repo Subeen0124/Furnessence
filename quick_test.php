@@ -35,7 +35,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         echo "<div class='test-card'>";
         echo "<img src='$image' alt='" . htmlspecialchars($product['name']) . "'>";
         echo "<h3>" . htmlspecialchars($product['name']) . "</h3>";
-        echo "<p>$" . number_format($product['price'], 2) . "</p>";
+        echo "<p>Rs " . number_format($product['price'], 2) . "</p>";
         echo "<p>Category: " . htmlspecialchars($product['category_name']) . "</p>";
         echo "<p>Stock: " . $product['stock_quantity'] . "</p>";
         echo "</div>";

@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+require_once 'includes/algorithms/ProductSearch.php';
 
 $is_logged_in = isset($_SESSION['user_id']);
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
@@ -7,7 +8,6 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
 
 // Get search query
 $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
-$search_term = mysqli_real_escape_string($conn, $search_query);
 
 // Get counts for header
 $wishlist_count = 0;
@@ -31,30 +31,14 @@ if ($is_logged_in) {
     }
 }
 
-// Search products
+// Use Product Search Algorithm
 $products = [];
 $total_results = 0;
 
-if (!empty($search_term)) {
-    $search_sql = "SELECT p.*, c.name as category_name, c.slug as category_slug 
-                   FROM products p 
-                   LEFT JOIN categories c ON p.category_id = c.id 
-                   WHERE p.is_active = 1 
-                   AND (
-                       p.name LIKE '%$search_term%' 
-                       OR p.description LIKE '%$search_term%'
-                       OR c.name LIKE '%$search_term%'
-                   )
-                   ORDER BY p.created_at DESC";
-    
-    $search_result = mysqli_query($conn, $search_sql);
-    
-    if ($search_result) {
-        $total_results = mysqli_num_rows($search_result);
-        while ($row = mysqli_fetch_assoc($search_result)) {
-            $products[] = $row;
-        }
-    }
+if (!empty($search_query)) {
+    $searchEngine = new ProductSearch($conn, $search_query);
+    $products = $searchEngine->search();
+    $total_results = count($products);
 }
 ?>
 <!DOCTYPE html>
@@ -67,6 +51,7 @@ if (!empty($search_term)) {
     <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="./assests/css/style.css?v=14.0">
     <link rel="stylesheet" href="./assests/css/search.css">
+    <link rel="stylesheet" href="./assests/css/autocomplete.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -286,7 +271,7 @@ if (!empty($search_term)) {
                         <?php foreach ($products as $product): ?>
                             <li>
                                 <div class="product-card">
-                                    <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
+                                    <a href="product_details.php?id=<?php echo $product['id']; ?>" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
                                         <img src="<?php echo htmlspecialchars($product['image']); ?>" 
                                              width="300" height="300" loading="lazy"
                                              alt="<?php echo htmlspecialchars($product['name']); ?>" 
@@ -326,11 +311,11 @@ if (!empty($search_term)) {
                                     
                                     <div class="card-content">
                                         <h3 class="h3">
-                                            <a href="#" class="card-title"><?php echo htmlspecialchars($product['name']); ?></a>
+                                            <a href="product_details.php?id=<?php echo $product['id']; ?>" class="card-title"><?php echo htmlspecialchars($product['name']); ?></a>
                                         </h3>
                                         
                                         <div class="card-price">
-                                            <data class="price" value="<?php echo $product['price']; ?>">$<?php echo number_format($product['price'], 2); ?></data>
+                                            <data class="price" value="<?php echo $product['price']; ?>">Rs <?php echo number_format($product['price'], 2); ?></data>
                                         </div>
                                     </div>
                                 </div>
@@ -353,11 +338,12 @@ if (!empty($search_term)) {
         </div>
     </section>
     
-    <script src="./assests/js/script.js?v=4.0" defer></script>
-    
     <!-- ionicon link -->
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    
+    <script src="./assests/js/script.js?v=4.0"></script>
+    <script src="./assests/js/autocomplete.js"></script>
     
     <!-- Reinitialize product cards for search page -->
     <script>

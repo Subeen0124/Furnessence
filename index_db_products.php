@@ -56,11 +56,11 @@
 
                 <div class="card-content">
                   <h3 class="h3">
-                    <a href="#" class="card-title"><?php echo htmlspecialchars($product['name']); ?></a>
+                    <a href="product_details.php?id=<?php echo $product['id']; ?>" class="card-title"><?php echo htmlspecialchars($product['name']); ?></a>
                   </h3>
 
                   <div class="card-price">
-                    <data class="price" value="<?php echo $product['price']; ?>">$<?php echo number_format($product['price'], 2); ?></data>
+                    <data class="price" value="<?php echo $product['price']; ?>">Rs <?php echo number_format($product['price'], 2); ?></data>
                   </div>
                   
                   <?php if ($is_low_stock && !$is_out_of_stock): ?>

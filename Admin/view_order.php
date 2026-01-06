@@ -115,14 +115,14 @@ $items_result = mysqli_query($conn, $items_query);
                                 ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($item['product_name']); ?></td>
-                                        <td>$<?php echo number_format($item['product_price'], 2); ?></td>
+                                        <td>Rs <?php echo number_format($item['product_price'], 2); ?></td>
                                         <td><?php echo $item['quantity']; ?></td>
-                                        <td>$<?php echo number_format($item['subtotal'], 2); ?></td>
+                                        <td>Rs <?php echo number_format($item['subtotal'], 2); ?></td>
                                     </tr>
                                 <?php endwhile; ?>
                                 <tr class="order-total-row">
                                     <td colspan="3" class="total-label">Total:</td>
-                                    <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                    <td>Rs <?php echo number_format($order['total_amount'], 2); ?></td>
                                 </tr>
                             </tbody>
                         </table>

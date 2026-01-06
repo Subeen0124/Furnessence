@@ -150,7 +150,7 @@ if ($is_logged_in) {
                             
                             <div class="item-details">
                                 <h3><?php echo htmlspecialchars($item['product_name']); ?></h3>
-                                <div class="item-price">$<?php echo number_format($item['product_price'], 2); ?></div>
+                                <div class="item-price">Rs <?php echo number_format($item['product_price'], 2); ?></div>
                                 
                                 <div class="quantity-controls">
                                     <form method="POST" class="qty-form">
@@ -180,7 +180,7 @@ if ($is_logged_in) {
                                     </form>
                                     
                                     <span class="item-subtotal">
-                                        Subtotal: $<?php echo number_format($item['product_price'] * $item['quantity'], 2); ?>
+                                        Subtotal: Rs <?php echo number_format($item['product_price'] * $item['quantity'], 2); ?>
                                     </span>
                                 </div>
                                 
@@ -204,7 +204,7 @@ if ($is_logged_in) {
                     
                     <div class="summary-row">
                         <span>Subtotal:</span>
-                        <span>$<?php echo number_format($total, 2); ?></span>
+                        <span>Rs <?php echo number_format($total, 2); ?></span>
                     </div>
                     
                     <div class="summary-row">
@@ -214,12 +214,12 @@ if ($is_logged_in) {
                     
                     <div class="summary-row">
                         <span>Tax:</span>
-                        <span>$<?php echo number_format($total * 0.1, 2); ?></span>
+                        <span>Rs <?php echo number_format($total * 0.1, 2); ?></span>
                     </div>
                     
                     <div class="summary-row total">
                         <span>Total:</span>
-                        <span>$<?php echo number_format($total * 1.1, 2); ?></span>
+                        <span>Rs <?php echo number_format($total * 1.1, 2); ?></span>
                     </div>
                     
                     <?php if ($is_logged_in): ?>

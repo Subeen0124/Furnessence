@@ -299,22 +299,22 @@ $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
                         
                         <div class="summary-row">
                             <span>Subtotal:</span>
-                            <span>$<?php echo number_format($subtotal, 2); ?></span>
+                            <span>Rs <?php echo number_format($subtotal, 2); ?></span>
                         </div>
                         
                         <div class="summary-row">
                             <span>Shipping:</span>
-                            <span><?php echo $shipping > 0 ? '$' . number_format($shipping, 2) : 'Free'; ?></span>
+                            <span><?php echo $shipping > 0 ? 'Rs ' . number_format($shipping, 2) : 'Free'; ?></span>
                         </div>
                         
                         <div class="summary-row">
                             <span>Tax (10%):</span>
-                            <span>$<?php echo number_format($tax, 2); ?></span>
+                            <span>Rs <?php echo number_format($tax, 2); ?></span>
                         </div>
                         
                         <div class="summary-row total">
                             <span>Total:</span>
-                            <span>$<?php echo number_format($total, 2); ?></span>
+                            <span>Rs <?php echo number_format($total, 2); ?></span>
                         </div>
                         
                         <button type="submit" name="place_order" class="place-order-btn">

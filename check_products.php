@@ -43,7 +43,7 @@ if ($products_result) {
         echo "Products found:\n";
         echo "---------------------------------------------------\n";
         while ($product = mysqli_fetch_assoc($products_result)) {
-            echo "- " . $product['name'] . " ($" . $product['price'] . ") - ";
+            echo "- " . $product['name'] . " (Rs " . $product['price'] . ") - ";
             echo "Category: " . ($product['category_name'] ?? 'N/A') . " - ";
             echo "Stock: " . $product['stock_quantity'] . "\n";
         }

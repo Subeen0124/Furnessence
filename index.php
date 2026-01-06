@@ -22,6 +22,7 @@
     - custom css link
   -->
   <link rel="stylesheet" href="./assests/css/style.css?v=14.0">
+  <link rel="stylesheet" href="./assests/css/autocomplete.css">
 
   <!-- 
     - font awesome
@@ -517,7 +518,7 @@ if ($is_logged_in) {
             <li class="<?php echo $category_class; ?>" data-filter="<?php echo $category_class; ?>">
               <div class="product-card">
 
-                <a href="#" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
+                <a href="product_details.php?id=<?php echo $product['id']; ?>" class="card-banner img-holder has-before" style="--width: 300; --height: 300;">
                   <img src="<?php echo htmlspecialchars($product_image); ?>" width="300" height="300" loading="lazy"
                     alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-cover">
 
@@ -557,11 +558,11 @@ if ($is_logged_in) {
 
                 <div class="card-content">
                   <h3 class="h3">
-                    <a href="#" class="card-title"><?php echo htmlspecialchars($product['name']); ?></a>
+                    <a href="product_details.php?id=<?php echo $product['id']; ?>" class="card-title"><?php echo htmlspecialchars($product['name']); ?></a>
                   </h3>
 
                   <div class="card-price">
-                    <data class="price" value="<?php echo $product['price']; ?>">$<?php echo number_format($product['price'], 2); ?></data>
+                    <data class="price" value="<?php echo $product['price']; ?>">Rs <?php echo number_format($product['price'], 2); ?></data>
                   </div>
                   
                   <?php if ($is_low_stock && !$is_out_of_stock): ?>
@@ -626,13 +627,13 @@ if ($is_logged_in) {
                 <div class="card-content">
 
                   <h3 class="h3">
-                    <a href="#" class="card-title">Unique products that will impress your home in 2025.</a>
+                    <a href="#" class="card-title">Unique products that will impress your home in 2026.</a>
                   </h3>
 
                   <ul class="card-meta-list">
 
                     <li class="card-meta-item">
-                      <time class="card-meta-text" datetime="2022-09-27">November 27, 2025</time>
+                      <time class="card-meta-text" datetime="2026-01-06">January 6, 2026</time>
                     </li>
 
                     <li class="card-meta-item">
@@ -673,7 +674,7 @@ if ($is_logged_in) {
                   <ul class="card-meta-list">
 
                     <li class="card-meta-item">
-                      <time class="card-meta-text" datetime="2022-09-25">November 25, 2025</time>
+                      <time class="card-meta-text" datetime="2026-01-05">January 5, 2026</time>
                     </li>
 
                     <li class="card-meta-item">
@@ -714,7 +715,7 @@ if ($is_logged_in) {
                   <ul class="card-meta-list">
 
                     <li class="card-meta-item">
-                      <time class="card-meta-text" datetime="2025-09-18">November 18, 2025</time>
+                      <time class="card-meta-text" datetime="2026-01-04">January 4, 2026</time>
                     </li>
 
                     <li class="card-meta-item">
@@ -797,7 +798,7 @@ if ($is_logged_in) {
               <ion-icon name="location-sharp" aria-hidden="true"></ion-icon>
 
               <address class="address">
-                Furnessence, bharatpur-10, Nepal 2025
+                Furnessence, bharatpur-10, Nepal 2026
               </address>
             </li>
 
@@ -888,7 +889,7 @@ if ($is_logged_in) {
       <div class="footer-bottom">
 
         <p class="copyright">
-          &copy; 2025 All Rights Reserved by <a href="#" class="copyright-link">sajib&subin</a>.
+          &copy; 2026 All Rights Reserved by <a href="#" class="copyright-link">sajib&subin</a>.
         </p>
 
       </div>
@@ -913,15 +914,16 @@ if ($is_logged_in) {
 
 
   <!-- 
-    - custom js link
-  -->
-  <script src="./assests/js/script.js?v=4.0" defer></script>
-
-  <!-- 
     - ionicon link
   -->
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+  <!-- 
+    - custom js link
+  -->
+  <script src="./assests/js/script.js?v=4.0"></script>
+  <script src="./assests/js/autocomplete.js"></script>
 
 </body>
 

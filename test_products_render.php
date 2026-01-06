@@ -32,7 +32,7 @@ if ($products_result) {
             echo "<strong>Category Slug:</strong> " . htmlspecialchars($product['category_slug']) . "<br>";
             echo "<strong>Category Class:</strong> " . $category_class . "<br>";
             echo "<strong>data-filter Value:</strong> " . $category_class . "<br>";
-            echo "<strong>Price:</strong> $" . number_format($product['price'], 2) . "<br>";
+            echo "<strong>Price:</strong> Rs " . number_format($product['price'], 2) . "<br>";
             echo "<strong>Stock:</strong> " . $product['stock_quantity'] . "<br>";
             echo "<strong>Active:</strong> " . ($product['is_active'] ? 'Yes' : 'No') . "<br>";
             echo "</div>";

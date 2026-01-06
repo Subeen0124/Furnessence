@@ -108,7 +108,7 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
                         <i class="fas fa-dollar-sign"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>$<?php echo number_format($stats['total_revenue'] ?? 0, 2); ?></h3>
+                        <h3>Rs <?php echo number_format($stats['total_revenue'] ?? 0, 2); ?></h3>
                         <p>Total Revenue</p>
                     </div>
                 </div>
@@ -138,7 +138,7 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
                                         <tr>
                                             <td>#<?php echo htmlspecialchars($order['order_number']); ?></td>
                                             <td><?php echo htmlspecialchars($order['user_name']); ?></td>
-                                            <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                            <td>Rs <?php echo number_format($order['total_amount'], 2); ?></td>
                                             <td><span class="status-badge status-<?php echo $order['status']; ?>"><?php echo ucfirst($order['status']); ?></span></td>
                                             <td><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
                                         </tr>

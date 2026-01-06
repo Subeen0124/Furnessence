@@ -160,7 +160,7 @@ $categories_result = mysqli_query($conn, $categories_query);
                                         </td>
                                         <td><?php echo htmlspecialchars($product['name']); ?></td>
                                         <td><?php echo htmlspecialchars($product['category_name'] ?? 'Uncategorized'); ?></td>
-                                        <td>$<?php echo number_format($product['price'], 2); ?></td>
+                                        <td>Rs <?php echo number_format($product['price'], 2); ?></td>
                                         <td><?php echo $product['stock_quantity']; ?></td>
                                         <td>
                                             <?php if ($product['stock_quantity'] == 0): ?>

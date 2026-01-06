@@ -64,7 +64,7 @@ $orders_result = mysqli_query($conn, $orders_query);
                                         <td>#<?php echo htmlspecialchars($order['order_number']); ?></td>
                                         <td><?php echo htmlspecialchars($order['user_name']); ?></td>
                                         <td><?php echo htmlspecialchars($order['user_email']); ?></td>
-                                        <td>$<?php echo number_format($order['total_amount'], 2); ?></td>
+                                        <td>Rs <?php echo number_format($order['total_amount'], 2); ?></td>
                                         <td>
                                             <form method="POST" class="inline-form">
                                                 <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">

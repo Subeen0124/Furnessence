@@ -54,7 +54,7 @@ if (mysqli_num_rows($products_result) > 0) {
         echo "<tr><th>Field</th><th>Value</th></tr>";
         echo "<tr><td>ID</td><td>" . $product['id'] . "</td></tr>";
         echo "<tr><td>Name</td><td>" . htmlspecialchars($product['name']) . "</td></tr>";
-        echo "<tr><td>Price</td><td>$" . number_format($product['price'], 2) . "</td></tr>";
+        echo "<tr><td>Price</td><td>Rs " . number_format($product['price'], 2) . "</td></tr>";
         echo "<tr><td>Stock</td><td>" . $product['stock_quantity'] . "</td></tr>";
         echo "<tr><td>Category Name</td><td>" . htmlspecialchars($product['category_name']) . "</td></tr>";
         echo "<tr><td>Category Slug</td><td>" . htmlspecialchars($product['category_slug']) . "</td></tr>";

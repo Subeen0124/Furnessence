@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (mysqli_num_rows($check_result) > 0) {
             $error = "Email already registered. Please <a href='login.php'>login</a> instead.";
         } else {
-            // Hash password
+            // Hash password using PHP's built-in password_hash
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             
             // Insert user into database

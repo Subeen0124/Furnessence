@@ -337,3 +337,127 @@ if (userDropdownBtn && userDropdownMenu) {
   console.log('User dropdown elements not found!');
 }
 
+
+/**
+ * Product Details Page - Add to Cart and Wishlist
+ */
+
+function initializeProductDetailsButtons() {
+  // Handle add to cart buttons (both classes)
+  const addToCartButtons = document.querySelectorAll('.add-to-cart-btn, .btn-add-cart');
+  const addToWishlistButtons = document.querySelectorAll('.add-to-wishlist-btn, .btn-wishlist');
+  
+  addToCartButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      if (btn.disabled) {
+        showNotification('This product is out of stock', 'error');
+        return;
+      }
+      
+      const productData = {
+        id: btn.getAttribute('data-product-id'),
+        name: btn.getAttribute('data-product-name'),
+        price: btn.getAttribute('data-product-price'),
+        image: btn.getAttribute('data-product-image')
+      };
+      
+      if (!productData.id || !productData.name || !productData.price) {
+        console.error('Invalid product data:', productData);
+        showNotification('Invalid product data', 'error');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('action', 'add_to_cart');
+      formData.append('product_id', productData.id);
+      formData.append('product_name', productData.name);
+      formData.append('product_price', productData.price);
+      formData.append('product_image', productData.image);
+      
+      fetch('cart_wishlist_handler.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showNotification(data.message, 'success');
+          if (data.cart_count !== undefined) {
+            updateBadge('cart', data.cart_count);
+          }
+        } else {
+          if (data.message.includes('login')) {
+            showNotification('Please login to continue', 'error');
+            setTimeout(() => {
+              window.location.href = 'login.php';
+            }, 1500);
+          } else {
+            showNotification(data.message, 'error');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+      });
+    });
+  });
+  
+  addToWishlistButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const productData = {
+        id: btn.getAttribute('data-product-id'),
+        name: btn.getAttribute('data-product-name'),
+        price: btn.getAttribute('data-product-price'),
+        image: btn.getAttribute('data-product-image')
+      };
+      
+      if (!productData.id || !productData.name || !productData.price) {
+        console.error('Invalid product data:', productData);
+        showNotification('Invalid product data', 'error');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('action', 'add_to_wishlist');
+      formData.append('product_id', productData.id);
+      formData.append('product_name', productData.name);
+      formData.append('product_price', productData.price);
+      formData.append('product_image', productData.image);
+      
+      fetch('cart_wishlist_handler.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showNotification(data.message, 'success');
+          if (data.wishlist_count !== undefined) {
+            updateBadge('wishlist', data.wishlist_count);
+          }
+        } else {
+          if (data.message.includes('login')) {
+            showNotification('Please login to continue', 'error');
+            setTimeout(() => {
+              window.location.href = 'login.php';
+            }, 1500);
+          } else {
+            showNotification(data.message, 'error');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+      });
+    });
+  });
+}
+
+// Initialize product details buttons on page load
+initializeProductDetailsButtons();

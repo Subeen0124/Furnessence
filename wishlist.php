@@ -137,7 +137,7 @@ $cart_count = mysqli_fetch_assoc($cart_result)['count'];
                         
                         <div class="item-details">
                             <h3><?php echo htmlspecialchars($item['product_name']); ?></h3>
-                            <div class="item-price">$<?php echo number_format($item['product_price'], 2); ?></div>
+                            <div class="item-price">Rs <?php echo number_format($item['product_price'], 2); ?></div>
                         </div>
                     </div>
                 <?php endwhile; ?>
