@@ -1,4 +1,14 @@
-<?php
+[User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+         ◀──────────────(Product Info, Order Status, Cart)───────────────        [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                 ◀──────────────(Product Info, Order Status, Cart)───────────────                [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                         ◀──────────────(Product Info, Order Status, Cart)───────────────                        [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                                 ◀──────────────(Product Info, Order Status, Cart)───────────────                                [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                                         ◀──────────────(Product Info, Order Status, Cart)───────────────                                        [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                                                 ◀──────────────(Product Info, Order Status, Cart)───────────────                                                [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                                                         ◀──────────────(Product Info, Order Status, Cart)───────────────                                                        [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                                                                 ◀──────────────(Product Info, Order Status, Cart)───────────────                                                                [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                                                                         ◀──────────────(Product Info, Order Status, Cart)───────────────                                                                        [User] ──(Browse, Search, Order, Register, Login)──▶ [Furnessence System] ◀──(Manage, Update, View)── [Admin]
+                                                                                 ◀──────────────(Product Info, Order Status, Cart)───────────────<?php
 require_once 'config.php';
 require_once 'includes/algorithms/ProductSearch.php';
 

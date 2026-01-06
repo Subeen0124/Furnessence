@@ -24,10 +24,24 @@ if ($is_logged_in) {
     if (isset($_POST['update_quantity'])) {
         $cart_id = intval($_POST['cart_id']);
         $quantity = intval($_POST['quantity']);
-        
         if ($quantity > 0) {
-            $update_query = "UPDATE cart SET quantity = $quantity WHERE id = $cart_id AND user_id = $user_id";
-            mysqli_query($conn, $update_query);
+            // Get product stock
+            $stock_query = "SELECT stock_quantity FROM products WHERE id = (SELECT product_id FROM cart WHERE id = $cart_id LIMIT 1) LIMIT 1";
+            $stock_result = mysqli_query($conn, $stock_query);
+            if ($stock_result && mysqli_num_rows($stock_result) > 0) {
+                $stock_data = mysqli_fetch_assoc($stock_result);
+                $available_stock = $stock_data['stock_quantity'];
+                if ($quantity > $available_stock) {
+                    $error = "Only $available_stock items in stock.";
+                } elseif ($quantity == $available_stock) {
+                    $update_query = "UPDATE cart SET quantity = $quantity WHERE id = $cart_id AND user_id = $user_id";
+                    mysqli_query($conn, $update_query);
+                    $error = "Already at maximum stock in cart.";
+                } else {
+                    $update_query = "UPDATE cart SET quantity = $quantity WHERE id = $cart_id AND user_id = $user_id";
+                    mysqli_query($conn, $update_query);
+                }
+            }
         }
     }
 
@@ -35,12 +49,27 @@ if ($is_logged_in) {
     $cart_query = "SELECT * FROM cart WHERE user_id = $user_id ORDER BY created_at DESC";
     $cart_result = mysqli_query($conn, $cart_query);
 
-    // Calculate total
+    // Calculate total and remove out-of-stock items
     $total = 0;
     $cart_items = [];
+    $removed_out_of_stock = false;
     while ($item = mysqli_fetch_assoc($cart_result)) {
+        // Check stock for each item
+        $stock_query = "SELECT stock_quantity FROM products WHERE id = {$item['product_id']} LIMIT 1";
+        $stock_result = mysqli_query($conn, $stock_query);
+        $stock_data = ($stock_result && mysqli_num_rows($stock_result) > 0) ? mysqli_fetch_assoc($stock_result) : null;
+        if ($stock_data && $stock_data['stock_quantity'] == 0) {
+            // Remove from cart if out of stock
+            $delete_query = "DELETE FROM cart WHERE id = {$item['id']} AND user_id = $user_id";
+            mysqli_query($conn, $delete_query);
+            $removed_out_of_stock = true;
+            continue;
+        }
         $cart_items[] = $item;
         $total += $item['product_price'] * $item['quantity'];
+    }
+    if ($removed_out_of_stock) {
+        $error = 'Some items were removed because they are out of stock.';
     }
 
     // Get wishlist count for header
@@ -151,7 +180,21 @@ if ($is_logged_in) {
                             <div class="item-details">
                                 <h3><?php echo htmlspecialchars($item['product_name']); ?></h3>
                                 <div class="item-price">Rs <?php echo number_format($item['product_price'], 2); ?></div>
-                                
+                                <?php
+                                // Get current stock for this product
+                                $stock_query = "SELECT stock_quantity, low_stock_threshold FROM products WHERE id = {$item['product_id']} LIMIT 1";
+                                $stock_result = mysqli_query($conn, $stock_query);
+                                $stock_data = ($stock_result && mysqli_num_rows($stock_result) > 0) ? mysqli_fetch_assoc($stock_result) : null;
+                                $is_out_of_stock = $stock_data && $stock_data['stock_quantity'] == 0;
+                                $is_low_stock = $stock_data && $stock_data['stock_quantity'] > 0 && $stock_data['stock_quantity'] <= $stock_data['low_stock_threshold'];
+                                ?>
+                                <?php if ($is_out_of_stock): ?>
+                                    <div class="stock-status out-of-stock"><i class="fas fa-times-circle"></i> Out of Stock</div>
+                                <?php elseif ($is_low_stock): ?>
+                                    <div class="stock-status low-stock"><i class="fas fa-exclamation-triangle"></i> Only <?php echo $stock_data['stock_quantity']; ?> left</div>
+                                <?php else: ?>
+                                    <div class="stock-status in-stock"><i class="fas fa-check-circle"></i> Full Stock (<?php echo $stock_data['stock_quantity']; ?> available)</div>
+                                <?php endif; ?>
                                 <div class="quantity-controls">
                                     <form method="POST" class="qty-form">
                                         <?php if ($is_logged_in): ?>
@@ -164,9 +207,7 @@ if ($is_logged_in) {
                                             <ion-icon name="remove"></ion-icon>
                                         </button>
                                     </form>
-                                    
                                     <input type="text" value="<?php echo $item['quantity']; ?>" class="qty-input" readonly>
-                                    
                                     <form method="POST" class="qty-form">
                                         <?php if ($is_logged_in): ?>
                                             <input type="hidden" name="cart_id" value="<?php echo $item['id']; ?>">
@@ -174,11 +215,10 @@ if ($is_logged_in) {
                                             <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
                                         <?php endif; ?>
                                         <input type="hidden" name="quantity" value="<?php echo $item['quantity'] + 1; ?>">
-                                        <button type="submit" name="update_quantity" class="qty-btn">
+                                        <button type="submit" name="update_quantity" class="qty-btn" <?php echo ($stock_data && $item['quantity'] >= $stock_data['stock_quantity']) ? 'disabled' : ''; ?>>
                                             <ion-icon name="add"></ion-icon>
                                         </button>
                                     </form>
-                                    
                                     <span class="item-subtotal">
                                         Subtotal: Rs <?php echo number_format($item['product_price'] * $item['quantity'], 2); ?>
                                     </span>
