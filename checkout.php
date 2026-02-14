@@ -180,8 +180,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
                 $khalti_response = json_decode($response, true);
                 
                 if ($http_code === 200 && isset($khalti_response['payment_url'])) {
-                    // Redirect user to Khalti payment page
-                    header("Location: " . $khalti_response['payment_url']);
+                    // Redirect user to Khalti payment page via intermediate page
+                    // This ensures proper viewport reset so Khalti page renders correctly
+                    $payment_url = htmlspecialchars($khalti_response['payment_url'], ENT_QUOTES, 'UTF-8');
+                    echo '<!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                        <title>Redirecting to Khalti...</title>
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; zoom: 100% !important; -ms-zoom: 1 !important; -webkit-zoom: 100% !important; }
+                            html, body { width: 100%; height: 100%; transform: scale(1); transform-origin: 0 0; }
+                            body { display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: "Jost", sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+                            .redirect-box { text-align: center; padding: 50px 40px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); max-width: 420px; width: 90%; }
+                            .redirect-box img { width: 120px; margin-bottom: 20px; }
+                            .redirect-box h2 { font-size: 1.4rem; color: #333; margin-bottom: 10px; }
+                            .redirect-box p { color: #666; font-size: 0.95rem; margin-bottom: 25px; }
+                            .spinner { width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #5C2D91; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+                            @keyframes spin { to { transform: rotate(360deg); } }
+                            .manual-link { color: #5C2D91; text-decoration: none; font-weight: 500; font-size: 0.9rem; }
+                            .manual-link:hover { text-decoration: underline; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="redirect-box">
+                            <div class="spinner"></div>
+                            <h2>Connecting to Khalti</h2>
+                            <p>You are being redirected to the secure payment page. Please wait...</p>
+                            <a href="' . $payment_url . '" class="manual-link">Click here if not redirected automatically</a>
+                        </div>
+                        <script>
+                            // Reset any zoom on the document
+                            document.documentElement.style.zoom = "100%";
+                            document.body.style.zoom = "100%";
+                            // Redirect after short delay for viewport to settle
+                            setTimeout(function() {
+                                window.location.replace("' . $payment_url . '");
+                            }, 1500);
+                        </script>
+                    </body>
+                    </html>';
                     exit();
                 } else {
                     // Log the error for debugging
