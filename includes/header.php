@@ -69,6 +69,12 @@ if (!isset($cart_count)) {
             </div>
             <ul class="user-dropdown-list">
               <li>
+                <a href="dashboard.php" class="user-dropdown-link">
+                  <ion-icon name="grid-outline"></ion-icon>
+                  <span>Dashboard</span>
+                </a>
+              </li>
+              <li>
                 <a href="profile.php" class="user-dropdown-link">
                   <ion-icon name="person-outline"></ion-icon>
                   <span>My Profile</span>

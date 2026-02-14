@@ -11,7 +11,7 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = mysqli_real_escape_string($conn, trim($_POST['username']));
+    $username = trim($_POST['username']);
     $password = trim($_POST['password']);
     
     if (empty($username) || empty($password)) {
@@ -20,8 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $login_success = false;
         
         // Try admin table first
-        $query = "SELECT id, username, password, full_name FROM admins WHERE username = '$username' OR email = '$username' LIMIT 1";
-        $result = mysqli_query($conn, $query);
+        $stmt = mysqli_prepare($conn, "SELECT id, username, password, full_name FROM admins WHERE username = ? OR email = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "ss", $username, $username);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         
         if ($result && mysqli_num_rows($result) > 0) {
             $admin = mysqli_fetch_assoc($result);
@@ -37,8 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // If not found in admins, try users table with admin role
         if (!$login_success) {
-            $query = "SELECT id, name, email, password, role FROM users WHERE (email = '$username' OR name = '$username') AND role = 'admin' LIMIT 1";
-            $result = mysqli_query($conn, $query);
+            $stmt2 = mysqli_prepare($conn, "SELECT id, name, email, password, role FROM users WHERE (email = ? OR name = ?) AND role = 'admin' LIMIT 1");
+            mysqli_stmt_bind_param($stmt2, "ss", $username, $username);
+            mysqli_stmt_execute($stmt2);
+            $result = mysqli_stmt_get_result($stmt2);
             
             if ($result && mysqli_num_rows($result) > 0) {
                 $user = mysqli_fetch_assoc($result);

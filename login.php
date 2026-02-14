@@ -12,7 +12,7 @@ $success = '';
 
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
     $remember = isset($_POST['remember']);
     
@@ -20,14 +20,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Please fill in all fields.";
     } else {
         // Check if user exists
-        $query = "SELECT * FROM users WHERE email = '$email' LIMIT 1";
-        $result = mysqli_query($conn, $query);
+        $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         
         if ($result && mysqli_num_rows($result) > 0) {
             $user = mysqli_fetch_assoc($result);
             
             // Verify password using PHP's built-in password_verify
             if (password_verify($password, $user['password'])) {
+                // Check if account is active
+                $user_status = isset($user['status']) ? $user['status'] : 'active';
+                if ($user_status === 'inactive') {
+                    $error = "Your account has been deactivated. Please contact support.";
+                } else {
                 // Set session variables
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['name'];
@@ -39,26 +46,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     
                     foreach ($_SESSION['cart'] as $item) {
                         $product_id = intval($item['product_id']);
-                        $product_name = mysqli_real_escape_string($conn, $item['product_name']);
+                        $product_name = $item['product_name'];
                         $product_price = floatval($item['product_price']);
-                        $product_image = mysqli_real_escape_string($conn, $item['product_image']);
+                        $product_image = $item['product_image'];
                         $quantity = intval($item['quantity']);
                         
                         // Check if product already in database cart
-                        $check_query = "SELECT id, quantity FROM cart WHERE user_id = $user_id AND product_id = $product_id LIMIT 1";
-                        $check_result = mysqli_query($conn, $check_query);
+                        $check_stmt = mysqli_prepare($conn, "SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? LIMIT 1");
+                        mysqli_stmt_bind_param($check_stmt, "ii", $user_id, $product_id);
+                        mysqli_stmt_execute($check_stmt);
+                        $check_result = mysqli_stmt_get_result($check_stmt);
                         
                         if (mysqli_num_rows($check_result) > 0) {
                             // Update quantity
                             $existing = mysqli_fetch_assoc($check_result);
                             $new_quantity = $existing['quantity'] + $quantity;
-                            $update_query = "UPDATE cart SET quantity = $new_quantity WHERE id = {$existing['id']}";
-                            mysqli_query($conn, $update_query);
+                            $update_stmt = mysqli_prepare($conn, "UPDATE cart SET quantity = ? WHERE id = ?");
+                            mysqli_stmt_bind_param($update_stmt, "ii", $new_quantity, $existing['id']);
+                            mysqli_stmt_execute($update_stmt);
+                            mysqli_stmt_close($update_stmt);
                         } else {
                             // Insert new item
-                            $insert_query = "INSERT INTO cart (user_id, product_id, product_name, product_price, product_image, quantity) VALUES ($user_id, $product_id, '$product_name', $product_price, '$product_image', $quantity)";
-                            mysqli_query($conn, $insert_query);
+                            $insert_stmt = mysqli_prepare($conn, "INSERT INTO cart (user_id, product_id, product_name, product_price, product_image, quantity) VALUES (?, ?, ?, ?, ?, ?)");
+                            mysqli_stmt_bind_param($insert_stmt, "iisdsi", $user_id, $product_id, $product_name, $product_price, $product_image, $quantity);
+                            mysqli_stmt_execute($insert_stmt);
+                            mysqli_stmt_close($insert_stmt);
                         }
+                        mysqli_stmt_close($check_stmt);
                     }
                     
                     // Clear session cart after merging
@@ -73,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // Redirect to home page
                 header("Location: index.php");
                 exit();
+                } // end active check else
             } else {
                 $error = "Invalid email or password.";
             }

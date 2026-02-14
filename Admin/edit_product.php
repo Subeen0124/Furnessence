@@ -15,8 +15,10 @@ if ($product_id === 0) {
 }
 
 // Get product details
-$product_query = "SELECT * FROM products WHERE id = $product_id LIMIT 1";
-$product_result = mysqli_query($conn, $product_query);
+$product_stmt = mysqli_prepare($conn, "SELECT * FROM products WHERE id = ? LIMIT 1");
+mysqli_stmt_bind_param($product_stmt, "i", $product_id);
+mysqli_stmt_execute($product_stmt);
+$product_result = mysqli_stmt_get_result($product_stmt);
 
 if (mysqli_num_rows($product_result) === 0) {
     header('Location: manage_products.php');
@@ -27,9 +29,9 @@ $product = mysqli_fetch_assoc($product_result);
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
+    $name = trim($_POST['name']);
     $category_id = intval($_POST['category_id']);
-    $description = mysqli_real_escape_string($conn, trim($_POST['description']));
+    $description = trim($_POST['description']);
     $price = floatval($_POST['price']);
     $stock_quantity = intval($_POST['stock_quantity']);
     $low_stock_threshold = intval($_POST['low_stock_threshold']);
@@ -67,25 +69,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($name) || empty($price)) {
         $error = 'Please fill in all required fields';
     } else {
-        $update_query = "UPDATE products SET 
-            category_id = $category_id,
-            name = '$name',
-            slug = '$slug',
-            description = '$description',
-            price = $price,
-            stock_quantity = $stock_quantity,
-            low_stock_threshold = $low_stock_threshold,
-            image = '$image_path',
-            is_active = $is_active
-            WHERE id = $product_id";
+        $update_stmt = mysqli_prepare($conn, "UPDATE products SET 
+            category_id = ?,
+            name = ?,
+            slug = ?,
+            description = ?,
+            price = ?,
+            stock_quantity = ?,
+            low_stock_threshold = ?,
+            image = ?,
+            is_active = ?
+            WHERE id = ?");
+        mysqli_stmt_bind_param($update_stmt, "isssdiisii", $category_id, $name, $slug, $description, $price, $stock_quantity, $low_stock_threshold, $image_path, $is_active, $product_id);
         
-        if (mysqli_query($conn, $update_query)) {
+        if (mysqli_stmt_execute($update_stmt)) {
             $success = 'Product updated successfully!';
+            mysqli_stmt_close($update_stmt);
             // Refresh product data
-            $product_result = mysqli_query($conn, $product_query);
+            $refresh_stmt = mysqli_prepare($conn, "SELECT * FROM products WHERE id = ? LIMIT 1");
+            mysqli_stmt_bind_param($refresh_stmt, "i", $product_id);
+            mysqli_stmt_execute($refresh_stmt);
+            $product_result = mysqli_stmt_get_result($refresh_stmt);
             $product = mysqli_fetch_assoc($product_result);
+            mysqli_stmt_close($refresh_stmt);
         } else {
             $error = 'Failed to update product: ' . mysqli_error($conn);
+            mysqli_stmt_close($update_stmt);
         }
     }
 }

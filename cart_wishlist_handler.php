@@ -13,9 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = isset($_POST['action']) ? $_POST['action'] : '';
 $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
-$product_name = isset($_POST['product_name']) ? mysqli_real_escape_string($conn, $_POST['product_name']) : '';
+$product_name = isset($_POST['product_name']) ? $_POST['product_name'] : '';
 $product_price = isset($_POST['product_price']) ? floatval($_POST['product_price']) : 0;
-$product_image = isset($_POST['product_image']) ? mysqli_real_escape_string($conn, $_POST['product_image']) : '';
+$product_image = isset($_POST['product_image']) ? $_POST['product_image'] : '';
 
 if ($product_id === 0 || empty($product_name) || $product_price === 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid product data']);
@@ -30,39 +30,53 @@ if ($action === 'add_to_wishlist') {
     }
     
     // Check if already in wishlist
-    $check_query = "SELECT id FROM wishlist WHERE user_id = $user_id AND product_id = $product_id LIMIT 1";
-    $check_result = mysqli_query($conn, $check_query);
+    $check_stmt = mysqli_prepare($conn, "SELECT id FROM wishlist WHERE user_id = ? AND product_id = ? LIMIT 1");
+    mysqli_stmt_bind_param($check_stmt, "ii", $user_id, $product_id);
+    mysqli_stmt_execute($check_stmt);
+    $check_result = mysqli_stmt_get_result($check_stmt);
     
     if (mysqli_num_rows($check_result) > 0) {
+        mysqli_stmt_close($check_stmt);
         echo json_encode(['success' => false, 'message' => 'Already in wishlist']);
         exit();
     }
+    mysqli_stmt_close($check_stmt);
     
     // Add to wishlist
-    $insert_query = "INSERT INTO wishlist (user_id, product_id, product_name, product_price, product_image) VALUES ($user_id, $product_id, '$product_name', $product_price, '$product_image')";
+    $insert_stmt = mysqli_prepare($conn, "INSERT INTO wishlist (user_id, product_id, product_name, product_price, product_image) VALUES (?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($insert_stmt, "iisds", $user_id, $product_id, $product_name, $product_price, $product_image);
     
-    if (mysqli_query($conn, $insert_query)) {
+    if (mysqli_stmt_execute($insert_stmt)) {
+        mysqli_stmt_close($insert_stmt);
         // Get new count
-        $count_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
-        $count_result = mysqli_query($conn, $count_query);
+        $count_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM wishlist WHERE user_id = ?");
+        mysqli_stmt_bind_param($count_stmt, "i", $user_id);
+        mysqli_stmt_execute($count_stmt);
+        $count_result = mysqli_stmt_get_result($count_stmt);
         $wishlist_count = mysqli_fetch_assoc($count_result)['count'];
+        mysqli_stmt_close($count_stmt);
         
         echo json_encode(['success' => true, 'message' => 'Added to wishlist!', 'wishlist_count' => $wishlist_count]);
     } else {
+        mysqli_stmt_close($insert_stmt);
         echo json_encode(['success' => false, 'message' => 'Failed to add to wishlist']);
     }
     
 } elseif ($action === 'add_to_cart') {
     // Check product stock availability
-    $stock_query = "SELECT stock_quantity, low_stock_threshold FROM products WHERE id = $product_id LIMIT 1";
-    $stock_result = mysqli_query($conn, $stock_query);
+    $stock_stmt = mysqli_prepare($conn, "SELECT stock_quantity, low_stock_threshold FROM products WHERE id = ? LIMIT 1");
+    mysqli_stmt_bind_param($stock_stmt, "i", $product_id);
+    mysqli_stmt_execute($stock_stmt);
+    $stock_result = mysqli_stmt_get_result($stock_stmt);
     
     if (mysqli_num_rows($stock_result) === 0) {
+        mysqli_stmt_close($stock_stmt);
         echo json_encode(['success' => false, 'message' => 'Product not found']);
         exit();
     }
     
     $stock_data = mysqli_fetch_assoc($stock_result);
+    mysqli_stmt_close($stock_stmt);
     $available_stock = $stock_data['stock_quantity'];
     $low_stock_threshold = $stock_data['low_stock_threshold'];
     
@@ -73,12 +87,15 @@ if ($action === 'add_to_wishlist') {
     
     if ($is_logged_in) {
         // For logged-in users, use database
-        $check_query = "SELECT id, quantity FROM cart WHERE user_id = $user_id AND product_id = $product_id LIMIT 1";
-        $check_result = mysqli_query($conn, $check_query);
+        $check_stmt = mysqli_prepare($conn, "SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ? LIMIT 1");
+        mysqli_stmt_bind_param($check_stmt, "ii", $user_id, $product_id);
+        mysqli_stmt_execute($check_stmt);
+        $check_result = mysqli_stmt_get_result($check_stmt);
         
         if (mysqli_num_rows($check_result) > 0) {
             $cart_item = mysqli_fetch_assoc($check_result);
             $new_quantity = $cart_item['quantity'] + 1;
+            mysqli_stmt_close($check_stmt);
             
             // Check if requested quantity exceeds stock
             if ($new_quantity > $available_stock) {
@@ -87,20 +104,28 @@ if ($action === 'add_to_wishlist') {
             }
             
             // Update quantity
-            $update_query = "UPDATE cart SET quantity = $new_quantity WHERE user_id = $user_id AND product_id = $product_id";
-            mysqli_query($conn, $update_query);
+            $update_stmt = mysqli_prepare($conn, "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
+            mysqli_stmt_bind_param($update_stmt, "iii", $new_quantity, $user_id, $product_id);
+            mysqli_stmt_execute($update_stmt);
+            mysqli_stmt_close($update_stmt);
             $message = 'Quantity updated in cart!';
         } else {
+            mysqli_stmt_close($check_stmt);
             // Add to cart
-            $insert_query = "INSERT INTO cart (user_id, product_id, product_name, product_price, product_image, quantity) VALUES ($user_id, $product_id, '$product_name', $product_price, '$product_image', 1)";
-            mysqli_query($conn, $insert_query);
+            $insert_stmt = mysqli_prepare($conn, "INSERT INTO cart (user_id, product_id, product_name, product_price, product_image, quantity) VALUES (?, ?, ?, ?, ?, 1)");
+            mysqli_stmt_bind_param($insert_stmt, "iisds", $user_id, $product_id, $product_name, $product_price, $product_image);
+            mysqli_stmt_execute($insert_stmt);
+            mysqli_stmt_close($insert_stmt);
             $message = 'Added to cart!';
         }
         
         // Get new count
-        $count_query = "SELECT COUNT(*) as count FROM cart WHERE user_id = $user_id";
-        $count_result = mysqli_query($conn, $count_query);
+        $count_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM cart WHERE user_id = ?");
+        mysqli_stmt_bind_param($count_stmt, "i", $user_id);
+        mysqli_stmt_execute($count_stmt);
+        $count_result = mysqli_stmt_get_result($count_stmt);
         $cart_count = mysqli_fetch_assoc($count_result)['count'];
+        mysqli_stmt_close($count_stmt);
     } else {
         // For guest users, use session
         if (!isset($_SESSION['cart'])) {

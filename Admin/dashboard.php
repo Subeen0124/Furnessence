@@ -36,7 +36,7 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Furnessence</title>
-    <link rel="stylesheet" href="../assests/css/admin.css">
+    <link rel="stylesheet" href="../assests/css/admin.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-body">
@@ -53,65 +53,77 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
             
             <!-- Statistics Cards -->
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue">
-                        <i class="fas fa-box"></i>
+                <a href="manage_products.php" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3><?php echo $stats['total_products']; ?></h3>
+                            <p>Total Products</p>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3><?php echo $stats['total_products']; ?></h3>
-                        <p>Total Products</p>
-                    </div>
-                </div>
+                </a>
                 
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <i class="fas fa-exclamation-triangle"></i>
+                <a href="manage_products.php?stock=low" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3><?php echo $stats['low_stock_products']; ?></h3>
+                            <p>Low Stock Items</p>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3><?php echo $stats['low_stock_products']; ?></h3>
-                        <p>Low Stock Items</p>
-                    </div>
-                </div>
+                </a>
                 
-                <div class="stat-card">
-                    <div class="stat-icon red">
-                        <i class="fas fa-times-circle"></i>
+                <a href="manage_products.php?stock=out" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3><?php echo $stats['out_of_stock']; ?></h3>
+                            <p>Out of Stock</p>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3><?php echo $stats['out_of_stock']; ?></h3>
-                        <p>Out of Stock</p>
-                    </div>
-                </div>
+                </a>
                 
-                <div class="stat-card">
-                    <div class="stat-icon purple">
-                        <i class="fas fa-users"></i>
+                <a href="manage_users.php" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3><?php echo $stats['total_users']; ?></h3>
+                            <p>Total Users</p>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3><?php echo $stats['total_users']; ?></h3>
-                        <p>Total Users</p>
-                    </div>
-                </div>
+                </a>
                 
-                <div class="stat-card">
-                    <div class="stat-icon green">
-                        <i class="fas fa-shopping-cart"></i>
+                <a href="manage_orders.php" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3><?php echo $stats['total_orders']; ?></h3>
+                            <p>Total Orders</p>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3><?php echo $stats['total_orders']; ?></h3>
-                        <p>Total Orders</p>
-                    </div>
-                </div>
+                </a>
                 
-                <div class="stat-card">
-                    <div class="stat-icon teal">
-                        <i class="fas fa-dollar-sign"></i>
+                <a href="manage_orders.php?status=completed" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="stat-icon teal">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Rs <?php echo number_format($stats['total_revenue'] ?? 0, 2); ?></h3>
+                            <p>Total Revenue</p>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3>Rs <?php echo number_format($stats['total_revenue'] ?? 0, 2); ?></h3>
-                        <p>Total Revenue</p>
-                    </div>
-                </div>
+                </a>
             </div>
             
             <!-- Recent Orders and Low Stock -->

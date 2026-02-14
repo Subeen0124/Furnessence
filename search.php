@@ -14,17 +14,23 @@ $wishlist_count = 0;
 $cart_count = 0;
 
 if ($is_logged_in) {
-    $wishlist_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
-    $wishlist_result = mysqli_query($conn, $wishlist_query);
+    $wl_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM wishlist WHERE user_id = ?");
+    mysqli_stmt_bind_param($wl_stmt, "i", $user_id);
+    mysqli_stmt_execute($wl_stmt);
+    $wishlist_result = mysqli_stmt_get_result($wl_stmt);
     if ($wishlist_result) {
         $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
     }
+    mysqli_stmt_close($wl_stmt);
     
-    $cart_query = "SELECT COUNT(*) as count FROM cart WHERE user_id = $user_id";
-    $cart_result = mysqli_query($conn, $cart_query);
+    $ct_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM cart WHERE user_id = ?");
+    mysqli_stmt_bind_param($ct_stmt, "i", $user_id);
+    mysqli_stmt_execute($ct_stmt);
+    $cart_result = mysqli_stmt_get_result($ct_stmt);
     if ($cart_result) {
         $cart_count = mysqli_fetch_assoc($cart_result)['count'];
     }
+    mysqli_stmt_close($ct_stmt);
 } else {
     if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
         $cart_count = count($_SESSION['cart']);
@@ -94,6 +100,12 @@ if (!empty($search_query)) {
                                 </div>
                             </div>
                             <ul class="user-dropdown-list">
+                                <li>
+                                    <a href="dashboard.php" class="user-dropdown-link">
+                                        <ion-icon name="grid-outline"></ion-icon>
+                                        <span>Dashboard</span>
+                                    </a>
+                                </li>
                                 <li>
                                     <a href="profile.php" class="user-dropdown-link">
                                         <ion-icon name="person-outline"></ion-icon>

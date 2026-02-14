@@ -12,8 +12,8 @@ $success = '';
 
 // Handle registration form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     $agree_terms = isset($_POST['agree_terms']);
@@ -31,8 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "Please agree to the terms and conditions.";
     } else {
         // Check if email already exists
-        $check_query = "SELECT id FROM users WHERE email = '$email' LIMIT 1";
-        $check_result = mysqli_query($conn, $check_query);
+        $check_stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE email = ? LIMIT 1");
+        mysqli_stmt_bind_param($check_stmt, "s", $email);
+        mysqli_stmt_execute($check_stmt);
+        $check_result = mysqli_stmt_get_result($check_stmt);
         
         if (mysqli_num_rows($check_result) > 0) {
             $error = "Email already registered. Please <a href='login.php'>login</a> instead.";
@@ -41,9 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             
             // Insert user into database
-            $insert_query = "INSERT INTO users (name, email, password, created_at) VALUES ('$name', '$email', '$hashed_password', NOW())";
+            $insert_stmt = mysqli_prepare($conn, "INSERT INTO users (name, email, password, created_at) VALUES (?, ?, ?, NOW())");
+            mysqli_stmt_bind_param($insert_stmt, "sss", $name, $email, $hashed_password);
             
-            if (mysqli_query($conn, $insert_query)) {
+            if (mysqli_stmt_execute($insert_stmt)) {
                 $success = "Registration successful! Redirecting to login...";
                 
                 // Redirect after 2 seconds
@@ -51,7 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $error = "Registration failed. Please try again.";
             }
+            mysqli_stmt_close($insert_stmt);
         }
+        mysqli_stmt_close($check_stmt);
     }
 }
 ?>

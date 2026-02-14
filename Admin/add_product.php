@@ -8,9 +8,9 @@ $success = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
+    $name = trim($_POST['name']);
     $category_id = intval($_POST['category_id']);
-    $description = mysqli_real_escape_string($conn, trim($_POST['description']));
+    $description = trim($_POST['description']);
     $price = floatval($_POST['price']);
     $stock_quantity = intval($_POST['stock_quantity']);
     $low_stock_threshold = intval($_POST['low_stock_threshold']);
@@ -50,16 +50,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($name) || empty($price)) {
             $error = 'Please fill in all required fields';
         } else {
-            $insert_query = "INSERT INTO products (category_id, name, slug, description, price, stock_quantity, low_stock_threshold, image, is_active) 
-                VALUES ($category_id, '$name', '$slug', '$description', $price, $stock_quantity, $low_stock_threshold, '$image_path', $is_active)";
+            $insert_stmt = mysqli_prepare($conn, "INSERT INTO products (category_id, name, slug, description, price, stock_quantity, low_stock_threshold, image, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            mysqli_stmt_bind_param($insert_stmt, "isssdiisi", $category_id, $name, $slug, $description, $price, $stock_quantity, $low_stock_threshold, $image_path, $is_active);
             
-            if (mysqli_query($conn, $insert_query)) {
+            if (mysqli_stmt_execute($insert_stmt)) {
                 $success = 'Product added successfully!';
                 // Clear form
                 $_POST = [];
             } else {
                 $error = 'Failed to add product: ' . mysqli_error($conn);
             }
+            mysqli_stmt_close($insert_stmt);
         }
     }
 }

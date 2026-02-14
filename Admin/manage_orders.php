@@ -7,17 +7,38 @@ $admin = getAdminInfo();
 // Handle order status update
 if (isset($_POST['update_status'])) {
     $order_id = intval($_POST['order_id']);
-    $status = mysqli_real_escape_string($conn, $_POST['status']);
-    $update_query = "UPDATE orders SET status = '$status' WHERE id = $order_id";
-    mysqli_query($conn, $update_query);
+    $status = $_POST['status'];
+    $update_stmt = mysqli_prepare($conn, "UPDATE orders SET status = ? WHERE id = ?");
+    mysqli_stmt_bind_param($update_stmt, "si", $status, $order_id);
+    mysqli_stmt_execute($update_stmt);
+    mysqli_stmt_close($update_stmt);
     $success = 'Order status updated!';
 }
 
-$orders_query = "SELECT o.*, u.name as user_name, u.email as user_email 
-    FROM orders o 
-    LEFT JOIN users u ON o.user_id = u.id 
-    ORDER BY o.id ASC";
-$orders_result = mysqli_query($conn, $orders_query);
+// Get filter
+$status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
+$valid_statuses = ['all', 'pending', 'processing', 'completed', 'cancelled'];
+if (!in_array($status_filter, $valid_statuses)) {
+    $status_filter = 'all';
+}
+
+if ($status_filter !== 'all') {
+    $orders_stmt = mysqli_prepare($conn, "SELECT o.*, u.name as user_name, u.email as user_email 
+        FROM orders o 
+        LEFT JOIN users u ON o.user_id = u.id 
+        WHERE o.status = ?
+        ORDER BY o.id ASC");
+    mysqli_stmt_bind_param($orders_stmt, "s", $status_filter);
+    mysqli_stmt_execute($orders_stmt);
+    $orders_result = mysqli_stmt_get_result($orders_stmt);
+    mysqli_stmt_close($orders_stmt);
+} else {
+    $orders_query = "SELECT o.*, u.name as user_name, u.email as user_email 
+        FROM orders o 
+        LEFT JOIN users u ON o.user_id = u.id 
+        ORDER BY o.id ASC";
+    $orders_result = mysqli_query($conn, $orders_query);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -13,12 +13,14 @@ if ($order_id === 0) {
 }
 
 // Get order details
-$order_query = "SELECT o.*, u.name as user_name, u.email as user_email 
+$order_stmt = mysqli_prepare($conn, "SELECT o.*, u.name as user_name, u.email as user_email 
     FROM orders o 
     LEFT JOIN users u ON o.user_id = u.id 
-    WHERE o.id = $order_id 
-    LIMIT 1";
-$order_result = mysqli_query($conn, $order_query);
+    WHERE o.id = ? 
+    LIMIT 1");
+mysqli_stmt_bind_param($order_stmt, "i", $order_id);
+mysqli_stmt_execute($order_stmt);
+$order_result = mysqli_stmt_get_result($order_stmt);
 
 if (mysqli_num_rows($order_result) === 0) {
     header('Location: manage_orders.php');
@@ -26,10 +28,13 @@ if (mysqli_num_rows($order_result) === 0) {
 }
 
 $order = mysqli_fetch_assoc($order_result);
+mysqli_stmt_close($order_stmt);
 
 // Get order items
-$items_query = "SELECT * FROM order_items WHERE order_id = $order_id";
-$items_result = mysqli_query($conn, $items_query);
+$items_stmt = mysqli_prepare($conn, "SELECT * FROM order_items WHERE order_id = ?");
+mysqli_stmt_bind_param($items_stmt, "i", $order_id);
+mysqli_stmt_execute($items_stmt);
+$items_result = mysqli_stmt_get_result($items_stmt);
 ?>
 <!DOCTYPE html>
 <html lang="en">

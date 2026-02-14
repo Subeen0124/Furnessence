@@ -26,13 +26,18 @@ function getAdminInfo() {
     
     global $conn;
     $admin_id = $_SESSION['admin_id'];
-    $query = "SELECT id, username, email, full_name FROM admins WHERE id = $admin_id LIMIT 1";
-    $result = mysqli_query($conn, $query);
+    $stmt = mysqli_prepare($conn, "SELECT id, username, email, full_name FROM admins WHERE id = ? LIMIT 1");
+    mysqli_stmt_bind_param($stmt, "i", $admin_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     
     if ($result && mysqli_num_rows($result) > 0) {
-        return mysqli_fetch_assoc($result);
+        $admin = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
+        return $admin;
     }
     
+    mysqli_stmt_close($stmt);
     return null;
 }
 

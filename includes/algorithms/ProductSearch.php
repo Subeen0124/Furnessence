@@ -233,19 +233,21 @@ class ProductSearch {
         }
         
         $suggestions = [];
-        $searchTerm = mysqli_real_escape_string($this->conn, $this->searchQuery);
+        $searchTerm = $this->searchQuery . '%';
         
         // Get product names matching query
-        $query = "SELECT DISTINCT name FROM products 
+        $stmt = mysqli_prepare($this->conn, "SELECT DISTINCT name FROM products 
                   WHERE is_active = 1 
-                  AND name LIKE '$searchTerm%' 
-                  LIMIT $limit";
-        
-        $result = mysqli_query($this->conn, $query);
+                  AND name LIKE ? 
+                  LIMIT ?");
+        mysqli_stmt_bind_param($stmt, "si", $searchTerm, $limit);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         
         while ($row = mysqli_fetch_assoc($result)) {
             $suggestions[] = $row['name'];
         }
+        mysqli_stmt_close($stmt);
         
         return $suggestions;
     }
@@ -257,12 +259,13 @@ class ProductSearch {
      * @return array Popular search terms
      */
     public static function getPopularSearches($conn, $limit = 10) {
-        $query = "SELECT name FROM products 
+        $stmt = mysqli_prepare($conn, "SELECT name FROM products 
                   WHERE is_active = 1 
                   ORDER BY RAND() 
-                  LIMIT $limit";
-        
-        $result = mysqli_query($conn, $query);
+                  LIMIT ?");
+        mysqli_stmt_bind_param($stmt, "i", $limit);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         $searches = [];
         
         while ($row = mysqli_fetch_assoc($result)) {

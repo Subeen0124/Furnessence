@@ -11,13 +11,15 @@ if ($is_logged_in) {
     // Handle remove from cart
     if (isset($_GET['remove'])) {
         $cart_id = intval($_GET['remove']);
-        $delete_query = "DELETE FROM cart WHERE id = $cart_id AND user_id = $user_id";
+        $delete_stmt = mysqli_prepare($conn, "DELETE FROM cart WHERE id = ? AND user_id = ?");
+        mysqli_stmt_bind_param($delete_stmt, "ii", $cart_id, $user_id);
         
-        if (mysqli_query($conn, $delete_query)) {
+        if (mysqli_stmt_execute($delete_stmt)) {
             $success = "Item removed from cart!";
         } else {
             $error = "Failed to remove item.";
         }
+        mysqli_stmt_close($delete_stmt);
     }
 
     // Handle update quantity
@@ -26,28 +28,37 @@ if ($is_logged_in) {
         $quantity = intval($_POST['quantity']);
         if ($quantity > 0) {
             // Get product stock
-            $stock_query = "SELECT stock_quantity FROM products WHERE id = (SELECT product_id FROM cart WHERE id = $cart_id LIMIT 1) LIMIT 1";
-            $stock_result = mysqli_query($conn, $stock_query);
+            $stock_stmt = mysqli_prepare($conn, "SELECT stock_quantity FROM products WHERE id = (SELECT product_id FROM cart WHERE id = ? LIMIT 1) LIMIT 1");
+            mysqli_stmt_bind_param($stock_stmt, "i", $cart_id);
+            mysqli_stmt_execute($stock_stmt);
+            $stock_result = mysqli_stmt_get_result($stock_stmt);
             if ($stock_result && mysqli_num_rows($stock_result) > 0) {
                 $stock_data = mysqli_fetch_assoc($stock_result);
                 $available_stock = $stock_data['stock_quantity'];
                 if ($quantity > $available_stock) {
                     $error = "Only $available_stock items in stock.";
                 } elseif ($quantity == $available_stock) {
-                    $update_query = "UPDATE cart SET quantity = $quantity WHERE id = $cart_id AND user_id = $user_id";
-                    mysqli_query($conn, $update_query);
+                    $update_stmt = mysqli_prepare($conn, "UPDATE cart SET quantity = ? WHERE id = ? AND user_id = ?");
+                    mysqli_stmt_bind_param($update_stmt, "iii", $quantity, $cart_id, $user_id);
+                    mysqli_stmt_execute($update_stmt);
+                    mysqli_stmt_close($update_stmt);
                     $error = "Already at maximum stock in cart.";
                 } else {
-                    $update_query = "UPDATE cart SET quantity = $quantity WHERE id = $cart_id AND user_id = $user_id";
-                    mysqli_query($conn, $update_query);
+                    $update_stmt = mysqli_prepare($conn, "UPDATE cart SET quantity = ? WHERE id = ? AND user_id = ?");
+                    mysqli_stmt_bind_param($update_stmt, "iii", $quantity, $cart_id, $user_id);
+                    mysqli_stmt_execute($update_stmt);
+                    mysqli_stmt_close($update_stmt);
                 }
             }
+            mysqli_stmt_close($stock_stmt);
         }
     }
 
     // Get all cart items from database
-    $cart_query = "SELECT * FROM cart WHERE user_id = $user_id ORDER BY created_at DESC";
-    $cart_result = mysqli_query($conn, $cart_query);
+    $cart_stmt = mysqli_prepare($conn, "SELECT * FROM cart WHERE user_id = ? ORDER BY created_at DESC");
+    mysqli_stmt_bind_param($cart_stmt, "i", $user_id);
+    mysqli_stmt_execute($cart_stmt);
+    $cart_result = mysqli_stmt_get_result($cart_stmt);
 
     // Calculate total and remove out-of-stock items
     $total = 0;
@@ -55,13 +66,18 @@ if ($is_logged_in) {
     $removed_out_of_stock = false;
     while ($item = mysqli_fetch_assoc($cart_result)) {
         // Check stock for each item
-        $stock_query = "SELECT stock_quantity FROM products WHERE id = {$item['product_id']} LIMIT 1";
-        $stock_result = mysqli_query($conn, $stock_query);
+        $item_stock_stmt = mysqli_prepare($conn, "SELECT stock_quantity FROM products WHERE id = ? LIMIT 1");
+        mysqli_stmt_bind_param($item_stock_stmt, "i", $item['product_id']);
+        mysqli_stmt_execute($item_stock_stmt);
+        $stock_result = mysqli_stmt_get_result($item_stock_stmt);
         $stock_data = ($stock_result && mysqli_num_rows($stock_result) > 0) ? mysqli_fetch_assoc($stock_result) : null;
+        mysqli_stmt_close($item_stock_stmt);
         if ($stock_data && $stock_data['stock_quantity'] == 0) {
             // Remove from cart if out of stock
-            $delete_query = "DELETE FROM cart WHERE id = {$item['id']} AND user_id = $user_id";
-            mysqli_query($conn, $delete_query);
+            $del_stmt = mysqli_prepare($conn, "DELETE FROM cart WHERE id = ? AND user_id = ?");
+            mysqli_stmt_bind_param($del_stmt, "ii", $item['id'], $user_id);
+            mysqli_stmt_execute($del_stmt);
+            mysqli_stmt_close($del_stmt);
             $removed_out_of_stock = true;
             continue;
         }
@@ -73,9 +89,12 @@ if ($is_logged_in) {
     }
 
     // Get wishlist count for header
-    $wishlist_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
-    $wishlist_result = mysqli_query($conn, $wishlist_query);
+    $wl_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM wishlist WHERE user_id = ?");
+    mysqli_stmt_bind_param($wl_stmt, "i", $user_id);
+    mysqli_stmt_execute($wl_stmt);
+    $wishlist_result = mysqli_stmt_get_result($wl_stmt);
     $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
+    mysqli_stmt_close($wl_stmt);
 } else {
     // Handle session cart for guest users
     $cart_items = [];
@@ -182,9 +201,12 @@ if ($is_logged_in) {
                                 <div class="item-price">Rs <?php echo number_format($item['product_price'], 2); ?></div>
                                 <?php
                                 // Get current stock for this product
-                                $stock_query = "SELECT stock_quantity, low_stock_threshold FROM products WHERE id = {$item['product_id']} LIMIT 1";
-                                $stock_result = mysqli_query($conn, $stock_query);
+                                $tpl_stock_stmt = mysqli_prepare($conn, "SELECT stock_quantity, low_stock_threshold FROM products WHERE id = ? LIMIT 1");
+                                mysqli_stmt_bind_param($tpl_stock_stmt, "i", $item['product_id']);
+                                mysqli_stmt_execute($tpl_stock_stmt);
+                                $stock_result = mysqli_stmt_get_result($tpl_stock_stmt);
                                 $stock_data = ($stock_result && mysqli_num_rows($stock_result) > 0) ? mysqli_fetch_assoc($stock_result) : null;
+                                mysqli_stmt_close($tpl_stock_stmt);
                                 $is_out_of_stock = $stock_data && $stock_data['stock_quantity'] == 0;
                                 $is_low_stock = $stock_data && $stock_data['stock_quantity'] > 0 && $stock_data['stock_quantity'] <= $stock_data['low_stock_threshold'];
                                 ?>

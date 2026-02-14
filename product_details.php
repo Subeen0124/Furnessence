@@ -14,12 +14,14 @@ if ($product_id === 0) {
 }
 
 // Fetch product details
-$product_query = "SELECT p.*, c.name as category_name, c.slug as category_slug 
+$product_stmt = mysqli_prepare($conn, "SELECT p.*, c.name as category_name, c.slug as category_slug 
                   FROM products p 
                   LEFT JOIN categories c ON p.category_id = c.id 
-                  WHERE p.id = $product_id AND p.is_active = 1 
-                  LIMIT 1";
-$product_result = mysqli_query($conn, $product_query);
+                  WHERE p.id = ? AND p.is_active = 1 
+                  LIMIT 1");
+mysqli_stmt_bind_param($product_stmt, "i", $product_id);
+mysqli_stmt_execute($product_stmt);
+$product_result = mysqli_stmt_get_result($product_stmt);
 
 if (!$product_result || mysqli_num_rows($product_result) === 0) {
     header("Location: index.php");
@@ -29,32 +31,40 @@ if (!$product_result || mysqli_num_rows($product_result) === 0) {
 $product = mysqli_fetch_assoc($product_result);
 
 // Fetch related products (same category)
-$related_query = "SELECT p.*, c.name as category_name 
+$related_stmt = mysqli_prepare($conn, "SELECT p.*, c.name as category_name 
                   FROM products p 
                   LEFT JOIN categories c ON p.category_id = c.id 
-                  WHERE p.category_id = {$product['category_id']} 
-                  AND p.id != $product_id 
+                  WHERE p.category_id = ? 
+                  AND p.id != ? 
                   AND p.is_active = 1 
                   ORDER BY RAND() 
-                  LIMIT 4";
-$related_result = mysqli_query($conn, $related_query);
+                  LIMIT 4");
+mysqli_stmt_bind_param($related_stmt, "ii", $product['category_id'], $product_id);
+mysqli_stmt_execute($related_stmt);
+$related_result = mysqli_stmt_get_result($related_stmt);
 
 // Get wishlist count
 $wishlist_count = 0;
 $cart_count = 0;
 
 if ($is_logged_in) {
-    $wishlist_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
-    $wishlist_result = mysqli_query($conn, $wishlist_query);
+    $wl_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM wishlist WHERE user_id = ?");
+    mysqli_stmt_bind_param($wl_stmt, "i", $user_id);
+    mysqli_stmt_execute($wl_stmt);
+    $wishlist_result = mysqli_stmt_get_result($wl_stmt);
     if ($wishlist_result) {
         $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
     }
+    mysqli_stmt_close($wl_stmt);
     
-    $cart_query = "SELECT COUNT(*) as count FROM cart WHERE user_id = $user_id";
-    $cart_result = mysqli_query($conn, $cart_query);
+    $ct_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM cart WHERE user_id = ?");
+    mysqli_stmt_bind_param($ct_stmt, "i", $user_id);
+    mysqli_stmt_execute($ct_stmt);
+    $cart_result = mysqli_stmt_get_result($ct_stmt);
     if ($cart_result) {
         $cart_count = mysqli_fetch_assoc($cart_result)['count'];
     }
+    mysqli_stmt_close($ct_stmt);
 } else {
     if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
         $cart_count = count($_SESSION['cart']);

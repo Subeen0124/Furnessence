@@ -7,26 +7,37 @@ $admin = getAdminInfo();
 // Handle delete action
 if (isset($_GET['delete']) && isset($_GET['id'])) {
     $id = intval($_GET['id']);
-    $delete_query = "DELETE FROM products WHERE id = $id";
-    if (mysqli_query($conn, $delete_query)) {
+    $delete_stmt = mysqli_prepare($conn, "DELETE FROM products WHERE id = ?");
+    mysqli_stmt_bind_param($delete_stmt, "i", $id);
+    if (mysqli_stmt_execute($delete_stmt)) {
         $success = 'Product deleted successfully!';
     } else {
         $error = 'Failed to delete product';
     }
+    mysqli_stmt_close($delete_stmt);
 }
 
 // Get filter and search parameters
-$search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 $category_filter = isset($_GET['category']) ? intval($_GET['category']) : 0;
 $stock_filter = isset($_GET['stock']) ? $_GET['stock'] : 'all';
 
-// Build query
+// Build query with prepared statement
 $where = [];
+$params = [];
+$types = '';
+
 if (!empty($search)) {
-    $where[] = "(p.name LIKE '%$search%' OR p.description LIKE '%$search%')";
+    $where[] = "(p.name LIKE ? OR p.description LIKE ?)";
+    $search_param = '%' . $search . '%';
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $types .= 'ss';
 }
 if ($category_filter > 0) {
-    $where[] = "p.category_id = $category_filter";
+    $where[] = "p.category_id = ?";
+    $params[] = $category_filter;
+    $types .= 'i';
 }
 if ($stock_filter == 'low') {
     $where[] = "stock_quantity <= low_stock_threshold AND stock_quantity > 0";
@@ -36,12 +47,20 @@ if ($stock_filter == 'low') {
 
 $where_clause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-$products_query = "SELECT p.*, c.name as category_name 
+$products_sql = "SELECT p.*, c.name as category_name 
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
     $where_clause 
     ORDER BY p.id ASC";
-$products_result = mysqli_query($conn, $products_query);
+
+if (!empty($params)) {
+    $products_stmt = mysqli_prepare($conn, $products_sql);
+    mysqli_stmt_bind_param($products_stmt, $types, ...$params);
+    mysqli_stmt_execute($products_stmt);
+    $products_result = mysqli_stmt_get_result($products_stmt);
+} else {
+    $products_result = mysqli_query($conn, $products_sql);
+}
 
 // Get categories for filter
 $categories_query = "SELECT * FROM categories ORDER BY name ASC";

@@ -7,17 +7,21 @@ $admin = getAdminInfo();
 // Handle category actions
 if (isset($_POST['action'])) {
     if ($_POST['action'] == 'add') {
-        $name = mysqli_real_escape_string($conn, trim($_POST['name']));
+        $name = trim($_POST['name']);
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name)));
-        $description = mysqli_real_escape_string($conn, trim($_POST['description']));
+        $description = trim($_POST['description']);
         
-        $insert_query = "INSERT INTO categories (name, slug, description) VALUES ('$name', '$slug', '$description')";
-        mysqli_query($conn, $insert_query);
+        $insert_stmt = mysqli_prepare($conn, "INSERT INTO categories (name, slug, description) VALUES (?, ?, ?)");
+        mysqli_stmt_bind_param($insert_stmt, "sss", $name, $slug, $description);
+        mysqli_stmt_execute($insert_stmt);
+        mysqli_stmt_close($insert_stmt);
         $success = 'Category added successfully!';
     } elseif ($_POST['action'] == 'delete' && isset($_POST['id'])) {
         $id = intval($_POST['id']);
-        $delete_query = "DELETE FROM categories WHERE id = $id";
-        mysqli_query($conn, $delete_query);
+        $delete_stmt = mysqli_prepare($conn, "DELETE FROM categories WHERE id = ?");
+        mysqli_stmt_bind_param($delete_stmt, "i", $id);
+        mysqli_stmt_execute($delete_stmt);
+        mysqli_stmt_close($delete_stmt);
         $success = 'Category deleted successfully!';
     }
 }

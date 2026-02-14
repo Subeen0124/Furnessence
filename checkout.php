@@ -10,13 +10,18 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 // Get user details
-$user_query = "SELECT * FROM users WHERE id = $user_id LIMIT 1";
-$user_result = mysqli_query($conn, $user_query);
+$user_stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE id = ? LIMIT 1");
+mysqli_stmt_bind_param($user_stmt, "i", $user_id);
+mysqli_stmt_execute($user_stmt);
+$user_result = mysqli_stmt_get_result($user_stmt);
 $user = mysqli_fetch_assoc($user_result);
+mysqli_stmt_close($user_stmt);
 
 // Get cart items
-$cart_query = "SELECT * FROM cart WHERE user_id = $user_id ORDER BY created_at DESC";
-$cart_result = mysqli_query($conn, $cart_query);
+$cart_stmt = mysqli_prepare($conn, "SELECT * FROM cart WHERE user_id = ? ORDER BY created_at DESC");
+mysqli_stmt_bind_param($cart_stmt, "i", $user_id);
+mysqli_stmt_execute($cart_stmt);
+$cart_result = mysqli_stmt_get_result($cart_stmt);
 
 // Calculate totals
 $cart_items = [];
@@ -36,15 +41,15 @@ $error = '';
 // Handle order placement
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
     // Validate required fields
-    $full_name = mysqli_real_escape_string($conn, trim($_POST['full_name']));
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
-    $phone = mysqli_real_escape_string($conn, trim($_POST['phone']));
-    $address = mysqli_real_escape_string($conn, trim($_POST['address']));
-    $city = mysqli_real_escape_string($conn, trim($_POST['city']));
-    $state = mysqli_real_escape_string($conn, trim($_POST['state']));
-    $zip = mysqli_real_escape_string($conn, trim($_POST['zip']));
-    $payment_method = mysqli_real_escape_string($conn, $_POST['payment_method']);
-    $order_notes = isset($_POST['order_notes']) ? mysqli_real_escape_string($conn, trim($_POST['order_notes'])) : '';
+    $full_name = trim($_POST['full_name']);
+    $email = trim($_POST['email']);
+    $phone = trim($_POST['phone']);
+    $address = trim($_POST['address']);
+    $city = trim($_POST['city']);
+    $state = trim($_POST['state']);
+    $zip = trim($_POST['zip']);
+    $payment_method = $_POST['payment_method'];
+    $order_notes = isset($_POST['order_notes']) ? trim($_POST['order_notes']) : '';
     
     if (empty($full_name) || empty($email) || empty($phone) || empty($address) || empty($city) || empty($state) || empty($zip)) {
         $error = "Please fill in all required fields.";
@@ -57,17 +62,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
         try {
             // Check stock availability for all items
             foreach ($cart_items as $item) {
-                $stock_check = "SELECT stock_quantity FROM products WHERE id = {$item['product_id']} LIMIT 1";
-                $stock_result = mysqli_query($conn, $stock_check);
+                $stock_stmt = mysqli_prepare($conn, "SELECT stock_quantity FROM products WHERE id = ? LIMIT 1");
+                mysqli_stmt_bind_param($stock_stmt, "i", $item['product_id']);
+                mysqli_stmt_execute($stock_stmt);
+                $stock_result = mysqli_stmt_get_result($stock_stmt);
                 
                 if (mysqli_num_rows($stock_result) > 0) {
                     $stock_data = mysqli_fetch_assoc($stock_result);
                     if ($stock_data['stock_quantity'] < $item['quantity']) {
+                        mysqli_stmt_close($stock_stmt);
                         throw new Exception("Insufficient stock for {$item['product_name']}. Only {$stock_data['stock_quantity']} available.");
                     }
                 } else {
+                    mysqli_stmt_close($stock_stmt);
                     throw new Exception("Product {$item['product_name']} not found.");
                 }
+                mysqli_stmt_close($stock_stmt);
             }
             
             // Generate order number
@@ -77,42 +87,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             $shipping_address = "$address, $city, $state $zip";
             
             // Insert order
-            $insert_order = "INSERT INTO orders (user_id, order_number, total_amount, status, shipping_address) 
-                VALUES ($user_id, '$order_number', $total, 'pending', '$shipping_address')";
+            $order_stmt = mysqli_prepare($conn, "INSERT INTO orders (user_id, order_number, total_amount, status, shipping_address) VALUES (?, ?, ?, 'pending', ?)");
+            mysqli_stmt_bind_param($order_stmt, "isds", $user_id, $order_number, $total, $shipping_address);
             
-            if (!mysqli_query($conn, $insert_order)) {
+            if (!mysqli_stmt_execute($order_stmt)) {
+                mysqli_stmt_close($order_stmt);
                 throw new Exception("Failed to create order");
             }
+            mysqli_stmt_close($order_stmt);
             
             $order_id = mysqli_insert_id($conn);
             
             // Insert order items and update stock
             foreach ($cart_items as $item) {
                 $product_id = $item['product_id'];
-                $product_name = mysqli_real_escape_string($conn, $item['product_name']);
+                $product_name = $item['product_name'];
                 $product_price = $item['product_price'];
                 $quantity = $item['quantity'];
                 $subtotal = $product_price * $quantity;
                 
                 // Insert order item
-                $insert_item = "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, subtotal) 
-                    VALUES ($order_id, $product_id, '$product_name', $product_price, $quantity, $subtotal)";
+                $item_stmt = mysqli_prepare($conn, "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, subtotal) VALUES (?, ?, ?, ?, ?, ?)");
+                mysqli_stmt_bind_param($item_stmt, "iisdid", $order_id, $product_id, $product_name, $product_price, $quantity, $subtotal);
                 
-                if (!mysqli_query($conn, $insert_item)) {
+                if (!mysqli_stmt_execute($item_stmt)) {
+                    mysqli_stmt_close($item_stmt);
                     throw new Exception("Failed to add order items");
                 }
+                mysqli_stmt_close($item_stmt);
                 
                 // Decrease stock
-                $update_stock = "UPDATE products SET stock_quantity = stock_quantity - $quantity WHERE id = $product_id";
+                $stock_update_stmt = mysqli_prepare($conn, "UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?");
+                mysqli_stmt_bind_param($stock_update_stmt, "ii", $quantity, $product_id);
                 
-                if (!mysqli_query($conn, $update_stock)) {
+                if (!mysqli_stmt_execute($stock_update_stmt)) {
+                    mysqli_stmt_close($stock_update_stmt);
                     throw new Exception("Failed to update stock");
                 }
+                mysqli_stmt_close($stock_update_stmt);
             }
             
             // Clear cart
-            $clear_cart = "DELETE FROM cart WHERE user_id = $user_id";
-            mysqli_query($conn, $clear_cart);
+            $clear_stmt = mysqli_prepare($conn, "DELETE FROM cart WHERE user_id = ?");
+            mysqli_stmt_bind_param($clear_stmt, "i", $user_id);
+            mysqli_stmt_execute($clear_stmt);
+            mysqli_stmt_close($clear_stmt);
             
             // Commit transaction
             mysqli_commit($conn);
@@ -131,9 +150,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
 }
 
 // Get wishlist count for header
-$wishlist_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
-$wishlist_result = mysqli_query($conn, $wishlist_query);
+$wl_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM wishlist WHERE user_id = ?");
+mysqli_stmt_bind_param($wl_stmt, "i", $user_id);
+mysqli_stmt_execute($wl_stmt);
+$wishlist_result = mysqli_stmt_get_result($wl_stmt);
 $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
+mysqli_stmt_close($wl_stmt);
 ?>
 <!DOCTYPE html>
 <html lang="en">

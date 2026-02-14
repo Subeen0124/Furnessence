@@ -9,34 +9,35 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Get user details
-$query = "SELECT * FROM users WHERE id = $user_id LIMIT 1";
-$result = mysqli_query($conn, $query);
+$user_stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE id = ? LIMIT 1");
+mysqli_stmt_bind_param($user_stmt, "i", $user_id);
+mysqli_stmt_execute($user_stmt);
+$result = mysqli_stmt_get_result($user_stmt);
 $user = mysqli_fetch_assoc($result);
-
+mysqli_stmt_close($user_stmt);
 $success = '';
 $error = '';
 
 // Handle profile update
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
-    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
-    
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
     if (empty($name) || empty($email)) {
         $error = "Name and email are required.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Please enter a valid email address.";
     } else {
         // Check if email is already taken by another user
-        $check_email = "SELECT id FROM users WHERE email = '$email' AND id != $user_id LIMIT 1";
-        $email_result = mysqli_query($conn, $check_email);
-        
+        $check_stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1");
+        mysqli_stmt_bind_param($check_stmt, "si", $email, $user_id);
+        mysqli_stmt_execute($check_stmt);
+        $email_result = mysqli_stmt_get_result($check_stmt);
         if (mysqli_num_rows($email_result) > 0) {
             $error = "Email already taken by another user.";
         } else {
-            $update_query = "UPDATE users SET name = '$name', email = '$email' WHERE id = $user_id";
-            
-            if (mysqli_query($conn, $update_query)) {
+            $update_stmt = mysqli_prepare($conn, "UPDATE users SET name = ?, email = ? WHERE id = ?");
+            mysqli_stmt_bind_param($update_stmt, "ssi", $name, $email, $user_id);
+            if (mysqli_stmt_execute($update_stmt)) {
                 $_SESSION['user_name'] = $name;
                 $_SESSION['user_email'] = $email;
                 $success = "Profile updated successfully!";
@@ -45,7 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_profile'])) {
             } else {
                 $error = "Failed to update profile.";
             }
+            mysqli_stmt_close($update_stmt);
         }
+        mysqli_stmt_close($check_stmt);
     }
 }
 
@@ -65,25 +68,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_password'])) {
         $error = "New passwords do not match.";
     } else {
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-        $update_pass = "UPDATE users SET password = '$hashed_password' WHERE id = $user_id";
+        $pass_stmt = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE id = ?");
+        mysqli_stmt_bind_param($pass_stmt, "si", $hashed_password, $user_id);
         
-        if (mysqli_query($conn, $update_pass)) {
+        if (mysqli_stmt_execute($pass_stmt)) {
             $success = "Password changed successfully!";
         } else {
             $error = "Failed to change password.";
         }
+        mysqli_stmt_close($pass_stmt);
     }
 }
 
 // Get wishlist count
-$wishlist_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
-$wishlist_result = mysqli_query($conn, $wishlist_query);
+$wl_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM wishlist WHERE user_id = ?");
+mysqli_stmt_bind_param($wl_stmt, "i", $user_id);
+mysqli_stmt_execute($wl_stmt);
+$wishlist_result = mysqli_stmt_get_result($wl_stmt);
 $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
+mysqli_stmt_close($wl_stmt);
 
 // Get cart count
-$cart_query = "SELECT COUNT(*) as count FROM cart WHERE user_id = $user_id";
-$cart_result = mysqli_query($conn, $cart_query);
+$ct_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM cart WHERE user_id = ?");
+mysqli_stmt_bind_param($ct_stmt, "i", $user_id);
+mysqli_stmt_execute($ct_stmt);
+$cart_result = mysqli_stmt_get_result($ct_stmt);
 $cart_count = mysqli_fetch_assoc($cart_result)['count'];
+mysqli_stmt_close($ct_stmt);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -142,9 +153,17 @@ $cart_count = mysqli_fetch_assoc($cart_result)['count'];
             <div class="profile-card">
                 <h2>Quick Links</h2>
                 <div class="quick-links">
+                    <a href="dashboard.php" class="quick-link-btn">
+                        <ion-icon name="grid"></ion-icon>
+                        <span>Dashboard</span>
+                    </a>
                     <a href="index.php" class="quick-link-btn">
                         <ion-icon name="home"></ion-icon>
                         <span>Home</span>
+                    </a>
+                    <a href="my_orders.php" class="quick-link-btn">
+                        <ion-icon name="receipt"></ion-icon>
+                        <span>My Orders</span>
                     </a>
                     <a href="wishlist.php" class="quick-link-btn">
                         <ion-icon name="heart"></ion-icon>

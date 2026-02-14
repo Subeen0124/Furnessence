@@ -69,17 +69,23 @@ $wishlist_count = 0;
 $cart_count = 0;
 
 if ($is_logged_in) {
-    $wishlist_query = "SELECT COUNT(*) as count FROM wishlist WHERE user_id = $user_id";
-    $wishlist_result = mysqli_query($conn, $wishlist_query);
+    $wishlist_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM wishlist WHERE user_id = ?");
+    mysqli_stmt_bind_param($wishlist_stmt, "i", $user_id);
+    mysqli_stmt_execute($wishlist_stmt);
+    $wishlist_result = mysqli_stmt_get_result($wishlist_stmt);
     if ($wishlist_result) {
         $wishlist_count = mysqli_fetch_assoc($wishlist_result)['count'];
     }
+    mysqli_stmt_close($wishlist_stmt);
     
-    $cart_query = "SELECT COUNT(*) as count FROM cart WHERE user_id = $user_id";
-    $cart_result = mysqli_query($conn, $cart_query);
+    $cart_stmt = mysqli_prepare($conn, "SELECT COUNT(*) as count FROM cart WHERE user_id = ?");
+    mysqli_stmt_bind_param($cart_stmt, "i", $user_id);
+    mysqli_stmt_execute($cart_stmt);
+    $cart_result = mysqli_stmt_get_result($cart_stmt);
     if ($cart_result) {
         $cart_count = mysqli_fetch_assoc($cart_result)['count'];
     }
+    mysqli_stmt_close($cart_stmt);
 } else {
     // For guest users, count from session
     if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
@@ -124,6 +130,12 @@ if ($is_logged_in) {
                 </div>
               </div>
               <ul class="user-dropdown-list">
+                <li>
+                  <a href="dashboard.php" class="user-dropdown-link">
+                    <ion-icon name="grid-outline"></ion-icon>
+                    <span>Dashboard</span>
+                  </a>
+                </li>
                 <li>
                   <a href="profile.php" class="user-dropdown-link">
                     <ion-icon name="person-outline"></ion-icon>
@@ -211,7 +223,7 @@ if ($is_logged_in) {
         </li>
 
         <li>
-          <a href="#" class="sidebar-link">Arabric</a>
+          <a href="#" class="sidebar-link">Arabic</a>
         </li>
 
       </ul>
@@ -273,7 +285,7 @@ if ($is_logged_in) {
       </li>
 
       <li class="contact-item">
-        <a href="sajiblama11@gmail.com" class="contact-link">support.center@furnessence.co</a>
+        <a href="mailto:support.center@furnessence.co" class="contact-link">support.center@furnessence.co</a>
       </li>
 
       <li class="contact-item">
@@ -759,7 +771,7 @@ if ($is_logged_in) {
               </p>
             </div>
 
-            <form action="" class="card-form">
+            <form action="#" class="card-form" onsubmit="event.preventDefault(); alert('Thank you for subscribing!'); this.reset();">
               <input type="email" name="email_address" placeholder="Your email address" required class="email-field">
 
               <button type="submit" class="newsletter-btn" aria-label="subscribe">

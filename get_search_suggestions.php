@@ -10,23 +10,25 @@ if (strlen($query) < 1) {
 }
 
 $suggestions = [];
-$query_escaped = mysqli_real_escape_string($conn, $query);
 
 // Get product names that start with or contain the search query
-$sql = "SELECT DISTINCT name 
+$search_param = '%' . $query . '%';
+$stmt = mysqli_prepare($conn, "SELECT DISTINCT name 
         FROM products 
-        WHERE name LIKE '%{$query_escaped}%' 
+        WHERE name LIKE ? 
         AND is_active = 1 
         ORDER BY name ASC 
-        LIMIT 10";
-
-$result = mysqli_query($conn, $sql);
+        LIMIT 10");
+mysqli_stmt_bind_param($stmt, "s", $search_param);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
 if ($result) {
     while ($row = mysqli_fetch_assoc($result)) {
         $suggestions[] = $row['name'];
     }
 }
+mysqli_stmt_close($stmt);
 
 echo json_encode($suggestions);
 ?>
