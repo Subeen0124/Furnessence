@@ -26,7 +26,7 @@
 define('KHALTI_MODE', 'test');
 
 // Sandbox Key (from test-admin.khalti.com → your live_secret_key)
-define('KHALTI_TEST_SECRET_KEY', 'your_test_live_secret_key_here');
+define('KHALTI_TEST_SECRET_KEY', '161107eaf13349958a732ec7d2a85d64');
 
 // Production Key (from admin.khalti.com → your live_secret_key)
 define('KHALTI_LIVE_SECRET_KEY', 'your_production_live_secret_key_here');
