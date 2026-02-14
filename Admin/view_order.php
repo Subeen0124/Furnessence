@@ -195,8 +195,8 @@ $items_result = mysqli_stmt_get_result($items_stmt);
                                 <span class="detail-label">Status:</span>
                                 <span class="detail-value">
                                     <?php 
-                                    $ps = $order['payment_status'] ?? 'pending';
-                                    $ps_class = ['paid' => 'completed', 'pending' => 'pending', 'failed' => 'cancelled'];
+                                    $ps = $order['payment_status'] ?? 'unpaid';
+                                    $ps_class = ['paid' => 'completed', 'unpaid' => 'pending', 'refunded' => 'cancelled'];
                                     ?>
                                     <span class="status-badge status-<?php echo $ps_class[$ps] ?? 'pending'; ?>">
                                         <?php echo ucfirst($ps); ?>

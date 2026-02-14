@@ -140,10 +140,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             
             // Handle payment method routing
             if ($payment_method === 'khalti') {
+                // Build base URL reliably
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $base_url = $protocol . '://' . $_SERVER['HTTP_HOST'];
+                $script_dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+                $site_url = $base_url . $script_dir;
+                
                 // Initiate Khalti Payment
                 $khalti_payload = [
-                    'return_url' => 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/khalti_verify.php',
-                    'website_url' => 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']),
+                    'return_url' => $site_url . '/khalti_verify.php',
+                    'website_url' => $site_url . '/',
                     'amount' => intval($total * 100), // Khalti expects amount in paisa
                     'purchase_order_id' => $order_number,
                     'purchase_order_name' => 'Furnessence Order #' . $order_number,
@@ -159,14 +165,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
                 curl_setopt($ch, CURLOPT_POST, true);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($khalti_payload));
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: key ' . getKhaltiSecretKey(),
+                    'Authorization: Key ' . getKhaltiSecretKey(),
                     'Content-Type: application/json'
                 ]);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
                 
                 $response = curl_exec($ch);
                 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curl_error = curl_error($ch);
                 curl_close($ch);
                 
                 $khalti_response = json_decode($response, true);
@@ -176,7 +184,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
                     header("Location: " . $khalti_response['payment_url']);
                     exit();
                 } else {
-                    $error = "Failed to initiate Khalti payment. Please try again or use another payment method.";
+                    // Log the error for debugging
+                    $debug_msg = $khalti_response['detail'] ?? ($curl_error ?: 'Unknown error');
+                    error_log("Khalti initiate failed: HTTP $http_code - $debug_msg");
+                    $error = "Failed to initiate Khalti payment: $debug_msg. Please try again or use another payment method.";
                 }
             } elseif ($payment_method === 'esewa') {
                 // eSewa integration placeholder

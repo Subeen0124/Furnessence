@@ -99,8 +99,8 @@ if ($status_filter !== 'all') {
                                         </td>
                                         <td>
                                             <?php 
-                                            $ps = $order['payment_status'] ?? 'pending';
-                                            $ps_class = ['paid' => 'completed', 'pending' => 'pending', 'failed' => 'cancelled'];
+                                            $ps = $order['payment_status'] ?? 'unpaid';
+                                            $ps_class = ['paid' => 'completed', 'unpaid' => 'pending', 'refunded' => 'cancelled'];
                                             ?>
                                             <span class="status-badge status-<?php echo $ps_class[$ps] ?? 'pending'; ?>">
                                                 <?php echo ucfirst($ps); ?>

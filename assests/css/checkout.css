@@ -241,12 +241,12 @@ body {
     color: #155724;
 }
 
-.payment-status.pending {
+.payment-status.unpaid {
     background: #fff3cd;
     color: #856404;
 }
 
-.payment-status.failed {
+.payment-status.refunded {
     background: #f8d7da;
     color: #721c24;
 }
