@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+require_once 'khalti_config.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -87,8 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             $shipping_address = "$address, $city, $state $zip";
             
             // Insert order
-            $order_stmt = mysqli_prepare($conn, "INSERT INTO orders (user_id, order_number, total_amount, status, shipping_address) VALUES (?, ?, ?, 'pending', ?)");
-            mysqli_stmt_bind_param($order_stmt, "isds", $user_id, $order_number, $total, $shipping_address);
+            $payment_status = ($payment_method === 'cod') ? 'unpaid' : 'unpaid';
+            $order_stmt = mysqli_prepare($conn, "INSERT INTO orders (user_id, order_number, total_amount, status, shipping_address, payment_method, payment_status) VALUES (?, ?, ?, 'pending', ?, ?, ?)");
+            mysqli_stmt_bind_param($order_stmt, "isdsss", $user_id, $order_number, $total, $shipping_address, $payment_method, $payment_status);
             
             if (!mysqli_stmt_execute($order_stmt)) {
                 mysqli_stmt_close($order_stmt);
@@ -136,10 +138,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             // Commit transaction
             mysqli_commit($conn);
             
-            $success = "Order placed successfully! Order ID: $order_number";
-            
-            // Redirect to success page after 2 seconds
-            header("refresh:2;url=index.php?order_success=1&order_id=$order_number");
+            // Handle payment method routing
+            if ($payment_method === 'khalti') {
+                // Initiate Khalti Payment
+                $khalti_payload = [
+                    'return_url' => 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/khalti_verify.php',
+                    'website_url' => 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']),
+                    'amount' => intval($total * 100), // Khalti expects amount in paisa
+                    'purchase_order_id' => $order_number,
+                    'purchase_order_name' => 'Furnessence Order #' . $order_number,
+                    'customer_info' => [
+                        'name' => $full_name,
+                        'email' => $email,
+                        'phone' => $phone
+                    ]
+                ];
+                
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, KHALTI_INITIATE_URL);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($khalti_payload));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Authorization: key ' . getKhaltiSecretKey(),
+                    'Content-Type: application/json'
+                ]);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                
+                $response = curl_exec($ch);
+                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                $khalti_response = json_decode($response, true);
+                
+                if ($http_code === 200 && isset($khalti_response['payment_url'])) {
+                    // Redirect user to Khalti payment page
+                    header("Location: " . $khalti_response['payment_url']);
+                    exit();
+                } else {
+                    $error = "Failed to initiate Khalti payment. Please try again or use another payment method.";
+                }
+            } elseif ($payment_method === 'esewa') {
+                // eSewa integration placeholder
+                $success = "Order placed successfully! Order ID: $order_number. Please complete eSewa payment.";
+                header("refresh:2;url=index.php?order_success=1&order_id=$order_number");
+            } else {
+                // COD or Bank Transfer
+                $success = "Order placed successfully! Order ID: $order_number";
+                header("refresh:2;url=index.php?order_success=1&order_id=$order_number");
+            }
             
         } catch (Exception $e) {
             // Rollback transaction on error
@@ -270,11 +317,36 @@ mysqli_stmt_close($wl_stmt);
                             <h2>Payment Method</h2>
                             
                             <div class="payment-methods">
-                                <div class="payment-option" onclick="selectPayment(this, 'cod')">
+                                <div class="payment-option active" onclick="selectPayment(this, 'cod')">
                                     <input type="radio" id="cod" name="payment_method" value="cod" checked>
                                     <label for="cod">
                                         <ion-icon name="cash-outline"></ion-icon>
-                                        <span>Cash on Delivery</span>
+                                        <div>
+                                            <span>Cash on Delivery</span>
+                                            <small>Pay when you receive</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="payment-option" onclick="selectPayment(this, 'khalti')">
+                                    <input type="radio" id="khalti" name="payment_method" value="khalti">
+                                    <label for="khalti">
+                                        <ion-icon name="wallet-outline"></ion-icon>
+                                        <div>
+                                            <span>Khalti</span>
+                                            <small>Pay securely via Khalti wallet</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="payment-option" onclick="selectPayment(this, 'esewa')">
+                                    <input type="radio" id="esewa" name="payment_method" value="esewa">
+                                    <label for="esewa">
+                                        <ion-icon name="phone-portrait-outline"></ion-icon>
+                                        <div>
+                                            <span>eSewa</span>
+                                            <small>Pay with eSewa mobile wallet</small>
+                                        </div>
                                     </label>
                                 </div>
                                 
@@ -282,17 +354,17 @@ mysqli_stmt_close($wl_stmt);
                                     <input type="radio" id="bank" name="payment_method" value="bank">
                                     <label for="bank">
                                         <ion-icon name="card-outline"></ion-icon>
-                                        <span>Bank Transfer</span>
+                                        <div>
+                                            <span>Bank Transfer</span>
+                                            <small>Direct bank payment</small>
+                                        </div>
                                     </label>
                                 </div>
-                                
-                                <div class="payment-option" onclick="selectPayment(this, 'esewa')">
-                                    <input type="radio" id="esewa" name="payment_method" value="esewa">
-                                    <label for="esewa">
-                                        <ion-icon name="wallet-outline"></ion-icon>
-                                        <span>eSewa / Khalti</span>
-                                    </label>
-                                </div>
+                            </div>
+                            
+                            <div id="khalti-info" class="payment-info" style="display:none;">
+                                <ion-icon name="information-circle-outline"></ion-icon>
+                                <p>You will be redirected to Khalti's secure payment page to complete your payment.</p>
                             </div>
                         </div>
                         

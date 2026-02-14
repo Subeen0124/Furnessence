@@ -377,6 +377,7 @@ $days_member = floor((time() - strtotime($user['created_at'])) / 86400);
                                         <th>Date</th>
                                         <th>Items</th>
                                         <th>Total</th>
+                                        <th>Payment</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -387,6 +388,17 @@ $days_member = floor((time() - strtotime($user['created_at'])) / 86400);
                                         <td class="order-date"><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
                                         <td class="order-items"><?php echo $order['item_count']; ?> item(s)</td>
                                         <td class="order-total">Rs <?php echo number_format($order['total_amount'], 2); ?></td>
+                                        <td>
+                                            <?php 
+                                            $pm = $order['payment_method'] ?? 'cod';
+                                            $pm_labels = ['cod' => 'COD', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank'];
+                                            $ps = $order['payment_status'] ?? 'pending';
+                                            ?>
+                                            <span class="payment-method-tag">
+                                                <?php echo $pm_labels[$pm] ?? ucfirst($pm); ?>
+                                            </span>
+                                            <span class="payment-status-tag <?php echo $ps; ?>"><?php echo ucfirst($ps); ?></span>
+                                        </td>
                                         <td>
                                             <span class="order-status status-<?php echo $order['status']; ?>">
                                                 <?php echo ucfirst($order['status']); ?>

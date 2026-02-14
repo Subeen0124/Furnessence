@@ -175,6 +175,45 @@ $items_result = mysqli_stmt_get_result($items_stmt);
                         </div>
                     </div>
                     
+                    <!-- Payment Information -->
+                    <div class="table-card order-info-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-credit-card"></i> Payment</h2>
+                        </div>
+                        <div class="card-content">
+                            <div class="detail-row">
+                                <span class="detail-label">Method:</span>
+                                <span class="detail-value">
+                                    <?php 
+                                    $pm = $order['payment_method'] ?? 'cod';
+                                    $pm_labels = ['cod' => 'Cash on Delivery', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank Transfer'];
+                                    echo $pm_labels[$pm] ?? ucfirst($pm);
+                                    ?>
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Status:</span>
+                                <span class="detail-value">
+                                    <?php 
+                                    $ps = $order['payment_status'] ?? 'pending';
+                                    $ps_class = ['paid' => 'completed', 'pending' => 'pending', 'failed' => 'cancelled'];
+                                    ?>
+                                    <span class="status-badge status-<?php echo $ps_class[$ps] ?? 'pending'; ?>">
+                                        <?php echo ucfirst($ps); ?>
+                                    </span>
+                                </span>
+                            </div>
+                            <?php if (!empty($order['transaction_id'])): ?>
+                            <div class="detail-row">
+                                <span class="detail-label">Transaction ID:</span>
+                                <span class="detail-value" style="font-family: monospace; font-size: 0.85rem;">
+                                    <?php echo htmlspecialchars($order['transaction_id']); ?>
+                                </span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
                     <!-- Shipping Address -->
                     <div class="table-card">
                         <div class="card-header">

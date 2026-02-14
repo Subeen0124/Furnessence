@@ -71,8 +71,9 @@ if ($status_filter !== 'all') {
                             <tr>
                                 <th>Order #</th>
                                 <th>Customer</th>
-                                <th>Email</th>
                                 <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Pay Status</th>
                                 <th>Status</th>
                                 <th>Date</th>
                                 <th>Actions</th>
@@ -84,8 +85,27 @@ if ($status_filter !== 'all') {
                                     <tr>
                                         <td>#<?php echo htmlspecialchars($order['order_number']); ?></td>
                                         <td><?php echo htmlspecialchars($order['user_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($order['user_email']); ?></td>
                                         <td>Rs <?php echo number_format($order['total_amount'], 2); ?></td>
+                                        <td>
+                                            <?php 
+                                            $pm = $order['payment_method'] ?? 'cod';
+                                            $pm_labels = ['cod' => 'COD', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank'];
+                                            $pm_icons = ['cod' => 'fa-money-bill', 'khalti' => 'fa-wallet', 'esewa' => 'fa-mobile-screen', 'bank' => 'fa-building-columns'];
+                                            ?>
+                                            <span class="status-badge status-<?php echo $pm === 'khalti' ? 'processing' : ($pm === 'esewa' ? 'completed' : 'pending'); ?>" style="font-size: 0.78rem;">
+                                                <i class="fas <?php echo $pm_icons[$pm] ?? 'fa-money-bill'; ?>"></i>
+                                                <?php echo $pm_labels[$pm] ?? ucfirst($pm); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php 
+                                            $ps = $order['payment_status'] ?? 'pending';
+                                            $ps_class = ['paid' => 'completed', 'pending' => 'pending', 'failed' => 'cancelled'];
+                                            ?>
+                                            <span class="status-badge status-<?php echo $ps_class[$ps] ?? 'pending'; ?>">
+                                                <?php echo ucfirst($ps); ?>
+                                            </span>
+                                        </td>
                                         <td>
                                             <form method="POST" class="inline-form">
                                                 <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
@@ -108,7 +128,7 @@ if ($status_filter !== 'all') {
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="7" class="no-data">No orders found</td>
+                                    <td colspan="8" class="no-data">No orders found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

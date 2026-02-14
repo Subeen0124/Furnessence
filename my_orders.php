@@ -250,9 +250,26 @@ mysqli_stmt_close($ct_stmt);
                     </div>
                     
                     <div class="order-card-footer">
-                        <div class="order-address">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <?php echo htmlspecialchars($order['shipping_address']); ?>
+                        <div class="order-footer-left">
+                            <div class="order-address">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <?php echo htmlspecialchars($order['shipping_address']); ?>
+                            </div>
+                            <div class="order-payment-info">
+                                <?php 
+                                $pm = $order['payment_method'] ?? 'cod';
+                                $pm_labels = ['cod' => 'Cash on Delivery', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank Transfer'];
+                                $pm_icons = ['cod' => 'fa-money-bill', 'khalti' => 'fa-wallet', 'esewa' => 'fa-mobile-screen', 'bank' => 'fa-building-columns'];
+                                $ps = $order['payment_status'] ?? 'pending';
+                                ?>
+                                <span class="payment-method-tag">
+                                    <i class="fas <?php echo $pm_icons[$pm] ?? 'fa-money-bill'; ?>"></i>
+                                    <?php echo $pm_labels[$pm] ?? ucfirst($pm); ?>
+                                </span>
+                                <span class="payment-status-tag <?php echo $ps; ?>">
+                                    <?php echo ucfirst($ps); ?>
+                                </span>
+                            </div>
                         </div>
                         <div class="order-total">
                             Total: <strong>Rs <?php echo number_format($order['total_amount'], 2); ?></strong>
