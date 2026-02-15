@@ -89,10 +89,10 @@ if ($status_filter !== 'all') {
                                         <td>
                                             <?php 
                                             $pm = $order['payment_method'] ?? 'cod';
-                                            $pm_labels = ['cod' => 'COD', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank'];
-                                            $pm_icons = ['cod' => 'fa-money-bill', 'khalti' => 'fa-wallet', 'esewa' => 'fa-mobile-screen', 'bank' => 'fa-building-columns'];
+                                            $pm_labels = ['cod' => 'COD', 'esewa' => 'eSewa', 'bank' => 'Bank'];
+                                            $pm_icons = ['cod' => 'fa-money-bill', 'esewa' => 'fa-mobile-screen', 'bank' => 'fa-building-columns'];
                                             ?>
-                                            <span class="status-badge status-<?php echo $pm === 'khalti' ? 'processing' : ($pm === 'esewa' ? 'completed' : 'pending'); ?>" style="font-size: 0.78rem;">
+                                            <span class="status-badge status-<?php echo $pm === 'esewa' ? 'completed' : 'pending'; ?>" style="font-size: 0.78rem;">
                                                 <i class="fas <?php echo $pm_icons[$pm] ?? 'fa-money-bill'; ?>"></i>
                                                 <?php echo $pm_labels[$pm] ?? ucfirst($pm); ?>
                                             </span>

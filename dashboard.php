@@ -391,7 +391,7 @@ $days_member = floor((time() - strtotime($user['created_at'])) / 86400);
                                         <td>
                                             <?php 
                                             $pm = $order['payment_method'] ?? 'cod';
-                                            $pm_labels = ['cod' => 'COD', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank'];
+                                            $pm_labels = ['cod' => 'COD', 'esewa' => 'eSewa', 'bank' => 'Bank'];
                                             $ps = $order['payment_status'] ?? 'unpaid';
                                             ?>
                                             <span class="payment-method-tag">

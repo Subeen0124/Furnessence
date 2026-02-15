@@ -186,7 +186,7 @@ $items_result = mysqli_stmt_get_result($items_stmt);
                                 <span class="detail-value">
                                     <?php 
                                     $pm = $order['payment_method'] ?? 'cod';
-                                    $pm_labels = ['cod' => 'Cash on Delivery', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank Transfer'];
+                                    $pm_labels = ['cod' => 'Cash on Delivery', 'esewa' => 'eSewa', 'bank' => 'Bank Transfer'];
                                     echo $pm_labels[$pm] ?? ucfirst($pm);
                                     ?>
                                 </span>

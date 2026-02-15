@@ -13,18 +13,16 @@ function selectPayment(element, paymentId) {
     // Check the radio button
     document.getElementById(paymentId).checked = true;
     
-    // Show/hide Khalti info
-    const khaltiInfo = document.getElementById('khalti-info');
-    if (khaltiInfo) {
-        khaltiInfo.style.display = (paymentId === 'khalti') ? 'flex' : 'none';
+    // Show/hide eSewa info
+    const esewaInfo = document.getElementById('esewa-info');
+    if (esewaInfo) {
+        esewaInfo.style.display = (paymentId === 'esewa') ? 'flex' : 'none';
     }
     
     // Update button text
     const placeBtn = document.querySelector('.place-order-btn');
     if (placeBtn) {
-        if (paymentId === 'khalti') {
-            placeBtn.innerHTML = '<ion-icon name="wallet-outline"></ion-icon> Pay with Khalti';
-        } else if (paymentId === 'esewa') {
+        if (paymentId === 'esewa') {
             placeBtn.innerHTML = '<ion-icon name="phone-portrait-outline"></ion-icon> Pay with eSewa';
         } else {
             placeBtn.innerHTML = '<ion-icon name="checkmark-circle"></ion-icon> Place Order';

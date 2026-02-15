@@ -258,8 +258,8 @@ mysqli_stmt_close($ct_stmt);
                             <div class="order-payment-info">
                                 <?php 
                                 $pm = $order['payment_method'] ?? 'cod';
-                                $pm_labels = ['cod' => 'Cash on Delivery', 'khalti' => 'Khalti', 'esewa' => 'eSewa', 'bank' => 'Bank Transfer'];
-                                $pm_icons = ['cod' => 'fa-money-bill', 'khalti' => 'fa-wallet', 'esewa' => 'fa-mobile-screen', 'bank' => 'fa-building-columns'];
+                                $pm_labels = ['cod' => 'Cash on Delivery', 'esewa' => 'eSewa', 'bank' => 'Bank Transfer'];
+                                $pm_icons = ['cod' => 'fa-money-bill', 'esewa' => 'fa-mobile-screen', 'bank' => 'fa-building-columns'];
                                 $ps = $order['payment_status'] ?? 'unpaid';
                                 ?>
                                 <span class="payment-method-tag">

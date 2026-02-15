@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once 'khalti_config.php';
+require_once 'esewa_config.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -139,99 +139,78 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['place_order'])) {
             mysqli_commit($conn);
             
             // Handle payment method routing
-            if ($payment_method === 'khalti') {
+            if ($payment_method === 'esewa') {
                 // Build base URL reliably
                 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
                 $base_url = $protocol . '://' . $_SERVER['HTTP_HOST'];
                 $script_dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
                 $site_url = $base_url . $script_dir;
                 
-                // Initiate Khalti Payment
-                $khalti_payload = [
-                    'return_url' => $site_url . '/khalti_verify.php',
-                    'website_url' => $site_url . '/',
-                    'amount' => intval($total * 100), // Khalti expects amount in paisa
-                    'purchase_order_id' => $order_number,
-                    'purchase_order_name' => 'Furnessence Order #' . $order_number,
-                    'customer_info' => [
-                        'name' => $full_name,
-                        'email' => $email,
-                        'phone' => $phone
-                    ]
-                ];
+                // Calculate eSewa amounts
+                $esewa_amount = number_format($subtotal, 2, '.', '');
+                $esewa_tax = number_format($tax, 2, '.', '');
+                $esewa_total = number_format($total, 2, '.', '');
+                $esewa_product_code = getEsewaMerchantCode();
                 
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, KHALTI_INITIATE_URL);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($khalti_payload));
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Authorization: Key ' . getKhaltiSecretKey(),
-                    'Content-Type: application/json'
-                ]);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                // Generate HMAC SHA256 signature
+                $esewa_signature = generateEsewaSignature($esewa_total, $order_number, $esewa_product_code);
                 
-                $response = curl_exec($ch);
-                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                $curl_error = curl_error($ch);
-                curl_close($ch);
+                $success_url = $site_url . '/esewa_verify.php';
+                $failure_url = $site_url . '/checkout.php?error=payment_cancelled';
                 
-                $khalti_response = json_decode($response, true);
-                
-                if ($http_code === 200 && isset($khalti_response['payment_url'])) {
-                    // Redirect user to Khalti payment page via intermediate page
-                    // This ensures proper viewport reset so Khalti page renders correctly
-                    $payment_url = htmlspecialchars($khalti_response['payment_url'], ENT_QUOTES, 'UTF-8');
-                    echo '<!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                        <title>Redirecting to Khalti...</title>
-                        <style>
-                            * { margin: 0; padding: 0; box-sizing: border-box; zoom: 100% !important; -ms-zoom: 1 !important; -webkit-zoom: 100% !important; }
-                            html, body { width: 100%; height: 100%; transform: scale(1); transform-origin: 0 0; }
-                            body { display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: "Jost", sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
-                            .redirect-box { text-align: center; padding: 50px 40px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); max-width: 420px; width: 90%; }
-                            .redirect-box img { width: 120px; margin-bottom: 20px; }
-                            .redirect-box h2 { font-size: 1.4rem; color: #333; margin-bottom: 10px; }
-                            .redirect-box p { color: #666; font-size: 0.95rem; margin-bottom: 25px; }
-                            .spinner { width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #5C2D91; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
-                            @keyframes spin { to { transform: rotate(360deg); } }
-                            .manual-link { color: #5C2D91; text-decoration: none; font-weight: 500; font-size: 0.9rem; }
-                            .manual-link:hover { text-decoration: underline; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="redirect-box">
-                            <div class="spinner"></div>
-                            <h2>Connecting to Khalti</h2>
-                            <p>You are being redirected to the secure payment page. Please wait...</p>
-                            <a href="' . $payment_url . '" class="manual-link">Click here if not redirected automatically</a>
-                        </div>
-                        <script>
-                            // Reset any zoom on the document
-                            document.documentElement.style.zoom = "100%";
-                            document.body.style.zoom = "100%";
-                            // Redirect after short delay for viewport to settle
-                            setTimeout(function() {
-                                window.location.replace("' . $payment_url . '");
-                            }, 1500);
-                        </script>
-                    </body>
-                    </html>';
-                    exit();
-                } else {
-                    // Log the error for debugging
-                    $debug_msg = $khalti_response['detail'] ?? ($curl_error ?: 'Unknown error');
-                    error_log("Khalti initiate failed: HTTP $http_code - $debug_msg");
-                    $error = "Failed to initiate Khalti payment: $debug_msg. Please try again or use another payment method.";
-                }
-            } elseif ($payment_method === 'esewa') {
-                // eSewa integration placeholder
-                $success = "Order placed successfully! Order ID: $order_number. Please complete eSewa payment.";
-                header("refresh:2;url=index.php?order_success=1&order_id=$order_number");
+                // eSewa uses form POST redirect to eSewa payment page
+                // Output an auto-submitting form to redirect to eSewa
+                echo '<!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Redirecting to eSewa...</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: "Jost", sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+                        .redirect-box { text-align: center; padding: 50px 40px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); max-width: 420px; width: 90%; }
+                        .redirect-box h2 { font-size: 1.4rem; color: #333; margin-bottom: 10px; }
+                        .redirect-box p { color: #666; font-size: 0.95rem; margin-bottom: 25px; }
+                        .spinner { width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #60BB46; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+                        @keyframes spin { to { transform: rotate(360deg); } }
+                        .manual-btn { display: inline-block; padding: 12px 30px; background: #60BB46; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; text-decoration: none; font-weight: 500; }
+                        .manual-btn:hover { background: #4da836; }
+                    </style>
+                </head>
+                <body>
+                    <div class="redirect-box">
+                        <div class="spinner"></div>
+                        <h2>Connecting to eSewa</h2>
+                        <p>You are being redirected to eSewa\'s secure payment page. Please wait...</p>
+                        <form id="esewaForm" action="' . ESEWA_PAYMENT_URL . '" method="POST">
+                            <input type="hidden" name="amount" value="' . $esewa_amount . '">
+                            <input type="hidden" name="tax_amount" value="' . $esewa_tax . '">
+                            <input type="hidden" name="total_amount" value="' . $esewa_total . '">
+                            <input type="hidden" name="transaction_uuid" value="' . htmlspecialchars($order_number) . '">
+                            <input type="hidden" name="product_code" value="' . htmlspecialchars($esewa_product_code) . '">
+                            <input type="hidden" name="product_service_charge" value="0">
+                            <input type="hidden" name="product_delivery_charge" value="0">
+                            <input type="hidden" name="success_url" value="' . htmlspecialchars($success_url) . '">
+                            <input type="hidden" name="failure_url" value="' . htmlspecialchars($failure_url) . '">
+                            <input type="hidden" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
+                            <input type="hidden" name="signature" value="' . htmlspecialchars($esewa_signature) . '">
+                            <button type="submit" class="manual-btn" style="display:none;" id="manualSubmit">Pay with eSewa</button>
+                        </form>
+                    </div>
+                    <script>
+                        // Auto-submit after brief delay
+                        setTimeout(function() {
+                            document.getElementById("esewaForm").submit();
+                        }, 1000);
+                        // Show manual button after 3 seconds as fallback
+                        setTimeout(function() {
+                            document.getElementById("manualSubmit").style.display = "inline-block";
+                        }, 3000);
+                    </script>
+                </body>
+                </html>';
+                exit();
             } else {
                 // COD or Bank Transfer
                 $success = "Order placed successfully! Order ID: $order_number";
@@ -378,24 +357,13 @@ mysqli_stmt_close($wl_stmt);
                                     </label>
                                 </div>
                                 
-                                <div class="payment-option" onclick="selectPayment(this, 'khalti')">
-                                    <input type="radio" id="khalti" name="payment_method" value="khalti">
-                                    <label for="khalti">
-                                        <ion-icon name="wallet-outline"></ion-icon>
-                                        <div>
-                                            <span>Khalti</span>
-                                            <small>Pay securely via Khalti wallet</small>
-                                        </div>
-                                    </label>
-                                </div>
-                                
                                 <div class="payment-option" onclick="selectPayment(this, 'esewa')">
                                     <input type="radio" id="esewa" name="payment_method" value="esewa">
                                     <label for="esewa">
                                         <ion-icon name="phone-portrait-outline"></ion-icon>
                                         <div>
                                             <span>eSewa</span>
-                                            <small>Pay with eSewa mobile wallet</small>
+                                            <small>Pay securely via eSewa wallet</small>
                                         </div>
                                     </label>
                                 </div>
@@ -412,9 +380,9 @@ mysqli_stmt_close($wl_stmt);
                                 </div>
                             </div>
                             
-                            <div id="khalti-info" class="payment-info" style="display:none;">
+                            <div id="esewa-info" class="payment-info" style="display:none;">
                                 <ion-icon name="information-circle-outline"></ion-icon>
-                                <p>You will be redirected to Khalti's secure payment page to complete your payment.</p>
+                                <p>You will be redirected to eSewa's secure payment page to complete your payment.</p>
                             </div>
                         </div>
                         
