@@ -964,196 +964,66 @@ if ($is_logged_in) {
   ?>
 
   <?php if ($show_welcome_popup): ?>
-  <!-- Welcome Popup Overlay -->
-  <div class="welcome-popup-overlay" id="welcomePopup">
-    <div class="welcome-popup">
-      <button class="welcome-popup-close" id="welcomePopupClose" aria-label="Close">&times;</button>
-      <div class="welcome-popup-icon">
-        <ion-icon name="<?php 
-          $h = date('H');
-          if ($h >= 5 && $h < 12) echo 'sunny-outline';
-          elseif ($h >= 12 && $h < 17) echo 'partly-sunny-outline';
-          elseif ($h >= 17 && $h < 21) echo 'cloudy-night-outline';
-          else echo 'moon-outline';
-        ?>"></ion-icon>
-      </div>
-      <h2 class="welcome-popup-title"><?php 
-          if ($h >= 5 && $h < 12) echo 'Good Morning';
-          elseif ($h >= 12 && $h < 17) echo 'Good Afternoon';
-          elseif ($h >= 17 && $h < 21) echo 'Good Evening';
-          else echo 'Good Night';
-        ?>!</h2>
-      <p class="welcome-popup-name">Welcome back, <strong><?php echo htmlspecialchars($user_name); ?></strong></p>
-      <p class="welcome-popup-msg">Happy shopping at Furnessence!</p>
-      <div class="welcome-popup-actions">
-        <a href="dashboard.php" class="welcome-popup-btn welcome-btn-primary">My Dashboard</a>
-        <button class="welcome-popup-btn welcome-btn-secondary" id="welcomePopupContinue">Continue Shopping</button>
-      </div>
-      <div class="welcome-popup-progress">
-        <div class="welcome-popup-progress-bar" id="welcomeProgressBar"></div>
-      </div>
-    </div>
+  <!-- Welcome Toast -->
+  <div class="welcome-toast" id="welcomeToast">
+    <ion-icon name="hand-right-outline" class="welcome-toast-icon"></ion-icon>
+    <span>Welcome, <strong><?php echo htmlspecialchars($user_name); ?></strong>! Happy shopping.</span>
+    <button class="welcome-toast-close" id="welcomeToastClose">&times;</button>
   </div>
 
   <style>
-    .welcome-popup-overlay {
+    .welcome-toast {
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
+      top: 20px;
+      right: 20px;
+      background: hsl(0, 0%, 13%);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 10px;
+      font-size: 15px;
       z-index: 9999;
-      animation: fadeInOverlay 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      animation: toastSlideIn 0.4s ease;
+      border-left: 4px solid hsl(12, 100%, 50%);
     }
-    @keyframes fadeInOverlay {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes slideInPopup {
-      from { opacity: 0; transform: translateY(-30px) scale(0.95); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes fadeOutOverlay {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-    .welcome-popup {
-      background: #fff;
-      border-radius: 16px;
-      padding: 40px 36px 28px;
-      max-width: 420px;
-      width: 90%;
-      text-align: center;
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-      animation: slideInPopup 0.4s ease 0.1s both;
-    }
-    .welcome-popup-close {
-      position: absolute;
-      top: 12px;
-      right: 16px;
+    .welcome-toast strong { color: hsl(12, 100%, 50%); }
+    .welcome-toast-icon { font-size: 22px; color: hsl(12, 100%, 50%); flex-shrink: 0; }
+    .welcome-toast-close {
       background: none;
       border: none;
-      font-size: 28px;
       color: #999;
+      font-size: 20px;
       cursor: pointer;
-      transition: color 0.2s;
+      margin-left: 6px;
       line-height: 1;
+      padding: 0;
     }
-    .welcome-popup-close:hover { color: #333; }
-    .welcome-popup-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 18px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .welcome-toast-close:hover { color: #fff; }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
     }
-    .welcome-popup-icon ion-icon {
-      font-size: 40px;
-      color: #fff;
-    }
-    .welcome-popup-title {
-      font-family: 'Jost', sans-serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 6px;
-    }
-    .welcome-popup-name {
-      font-size: 16px;
-      color: #555;
-      margin-bottom: 4px;
-    }
-    .welcome-popup-name strong {
-      color: #764ba2;
-      font-size: 18px;
-    }
-    .welcome-popup-msg {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 24px;
-    }
-    .welcome-popup-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .welcome-popup-btn {
-      padding: 10px 22px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      border: none;
-    }
-    .welcome-btn-primary {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-    }
-    .welcome-btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-    .welcome-btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-    }
-    .welcome-btn-secondary:hover {
-      background: #e0e0e0;
-      transform: translateY(-2px);
-    }
-    .welcome-popup-progress {
-      height: 3px;
-      background: #eee;
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .welcome-popup-progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #667eea, #764ba2);
-      width: 100%;
-      animation: progressShrink 5s linear forwards;
-    }
-    @keyframes progressShrink {
-      from { width: 100%; }
-      to { width: 0%; }
+    @keyframes toastSlideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(40px); }
     }
     @media (max-width: 480px) {
-      .welcome-popup { padding: 30px 20px 22px; }
-      .welcome-popup-title { font-size: 22px; }
-      .welcome-popup-actions { flex-direction: column; }
-      .welcome-popup-btn { width: 100%; text-align: center; }
+      .welcome-toast { right: 10px; left: 10px; font-size: 14px; }
     }
   </style>
 
   <script>
     (function() {
-      const overlay = document.getElementById('welcomePopup');
-      const closeBtn = document.getElementById('welcomePopupClose');
-      const continueBtn = document.getElementById('welcomePopupContinue');
-      const progressBar = document.getElementById('welcomeProgressBar');
-
-      function closePopup() {
-        overlay.style.animation = 'fadeOutOverlay 0.3s ease forwards';
-        setTimeout(() => overlay.remove(), 300);
+      const toast = document.getElementById('welcomeToast');
+      function close() {
+        toast.style.animation = 'toastSlideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
       }
-
-      closeBtn.addEventListener('click', closePopup);
-      continueBtn.addEventListener('click', closePopup);
-      overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) closePopup();
-      });
-
-      // Auto-close after 5 seconds
-      setTimeout(closePopup, 5000);
+      document.getElementById('welcomeToastClose').addEventListener('click', close);
+      setTimeout(close, 3500);
     })();
   </script>
   <?php endif; ?>
