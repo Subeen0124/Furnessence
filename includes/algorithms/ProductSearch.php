@@ -132,6 +132,7 @@ class ProductSearch {
         $productDesc = strtolower($product['description']);
         $categoryName = strtolower($product['category_name']);
         $searchLower = strtolower($this->searchQuery);
+        $nameAndDesc = $productName . ' ' . $productDesc;
         
         // EXACT MATCH in product name (100 points)
         if ($productName === $searchLower) {
@@ -144,8 +145,10 @@ class ProductSearch {
         }
         
         // Individual TERM matches in name
+        $nameTermHits = 0;
         foreach ($this->searchTerms as $term) {
             if (strpos($productName, $term) !== false) {
+                $nameTermHits++;
                 // Calculate position score (earlier = better)
                 $position = strpos($productName, $term);
                 $positionScore = max(50 - ($position * 2), 20);
@@ -154,16 +157,33 @@ class ProductSearch {
         }
         
         // Matches in DESCRIPTION (20-40 points)
+        $descTermHits = 0;
         foreach ($this->searchTerms as $term) {
             if (strpos($productDesc, $term) !== false) {
+                $descTermHits++;
                 $descScore += 25;
             }
         }
         
-        // GATE: product must have at least one match in name OR description
-        // Category-only matches are excluded to prevent irrelevant results
-        if ($nameScore === 0 && $descScore === 0) {
-            return 0;
+        // GATE: For multi-term searches, ALL terms must appear in name+description combined.
+        // For single-term searches, at least one match in name or description is required.
+        // This prevents partial matches like "Office Chair" showing for "Office Desk".
+        $totalTerms = count($this->searchTerms);
+        if ($totalTerms > 1) {
+            $combinedHits = 0;
+            foreach ($this->searchTerms as $term) {
+                if (strpos($nameAndDesc, $term) !== false) {
+                    $combinedHits++;
+                }
+            }
+            if ($combinedHits < $totalTerms) {
+                return 0;
+            }
+        } else {
+            // Single term: must match in name or description
+            if ($nameScore === 0 && $descScore === 0) {
+                return 0;
+            }
         }
         
         $score = $nameScore + $descScore;
