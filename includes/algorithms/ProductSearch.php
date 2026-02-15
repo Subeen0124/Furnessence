@@ -83,10 +83,14 @@ class ProductSearch {
         }
         
         // Score each product
+        // Minimum score threshold: products must match in name or description,
+        // not just category alone, to appear in results
+        $minScore = 35;
+        
         while ($product = mysqli_fetch_assoc($result)) {
             $score = $this->calculateRelevanceScore($product);
             
-            if ($score > 0) {
+            if ($score >= $minScore) {
                 $scoredProducts[] = [
                     'product' => $product,
                     'score' => $score,
