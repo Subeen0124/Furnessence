@@ -83,14 +83,13 @@ class ProductSearch {
         }
         
         // Score each product
-        // Minimum score threshold: products must match in name or description,
-        // not just category alone, to appear in results
-        $minScore = 35;
+        // Gate: only products matching in name/description are included
+        // (category-only matches are filtered out in calculateRelevanceScore)
         
         while ($product = mysqli_fetch_assoc($result)) {
             $score = $this->calculateRelevanceScore($product);
             
-            if ($score >= $minScore) {
+            if ($score > 0) {
                 $scoredProducts[] = [
                     'product' => $product,
                     'score' => $score,
@@ -127,6 +126,8 @@ class ProductSearch {
      */
     private function calculateRelevanceScore($product) {
         $score = 0;
+        $nameScore = 0;      // track name/description hits separately
+        $descScore = 0;
         $productName = strtolower($product['name']);
         $productDesc = strtolower($product['description']);
         $categoryName = strtolower($product['category_name']);
@@ -139,7 +140,7 @@ class ProductSearch {
         
         // FULL PHRASE match in name (80 points)
         if (strpos($productName, $searchLower) !== false) {
-            $score += 80;
+            $nameScore += 80;
         }
         
         // Individual TERM matches in name
@@ -148,18 +149,26 @@ class ProductSearch {
                 // Calculate position score (earlier = better)
                 $position = strpos($productName, $term);
                 $positionScore = max(50 - ($position * 2), 20);
-                $score += $positionScore;
+                $nameScore += $positionScore;
             }
         }
         
         // Matches in DESCRIPTION (20-40 points)
         foreach ($this->searchTerms as $term) {
             if (strpos($productDesc, $term) !== false) {
-                $score += 25;
+                $descScore += 25;
             }
         }
         
-        // Matches in CATEGORY (30 points)
+        // GATE: product must have at least one match in name OR description
+        // Category-only matches are excluded to prevent irrelevant results
+        if ($nameScore === 0 && $descScore === 0) {
+            return 0;
+        }
+        
+        $score = $nameScore + $descScore;
+        
+        // Matches in CATEGORY (bonus only, not standalone qualifier)
         foreach ($this->searchTerms as $term) {
             if (strpos($categoryName, $term) !== false) {
                 $score += 30;
