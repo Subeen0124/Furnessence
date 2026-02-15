@@ -84,6 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     setcookie('user_email', $email, time() + (86400 * 30), "/"); // 30 days
                 }
                 
+                // Set flag for welcome popup
+                $_SESSION['just_logged_in'] = true;
+                
                 // Redirect to home page
                 header("Location: index.php");
                 exit();
