@@ -21,7 +21,7 @@
   <!-- 
     - custom css link
   -->
-  <link rel="stylesheet" href="./assests/css/style.css?v=14.0">
+  <link rel="stylesheet" href="./assests/css/style.css?v=15.0">
   <link rel="stylesheet" href="./assests/css/autocomplete.css">
 
   <!-- 
@@ -118,6 +118,7 @@ if ($is_logged_in) {
           <div class="user-dropdown-wrapper">
             <button class="header-action-btn user-icon-btn" aria-label="user" aria-expanded="false" data-user-dropdown-btn>
               <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+              <span class="header-user-name"><?php echo htmlspecialchars(explode(' ', $user_name)[0]); ?></span>
             </button>
             <div class="user-dropdown-menu" data-user-dropdown>
               <div class="user-dropdown-header">
@@ -191,6 +192,34 @@ if ($is_logged_in) {
 
     </div>
   </header>
+
+    <?php if ($is_logged_in): ?>
+    <!-- Greeting Banner -->
+    <div class="greeting-banner">
+      <div class="container">
+        <div class="greeting-content">
+          <div class="greeting-text">
+            <ion-icon name="<?php 
+              $hour = date('H');
+              if ($hour >= 5 && $hour < 12) echo 'sunny-outline';
+              elseif ($hour >= 12 && $hour < 17) echo 'partly-sunny-outline';
+              elseif ($hour >= 17 && $hour < 21) echo 'cloudy-night-outline';
+              else echo 'moon-outline';
+            ?>"></ion-icon>
+            <span><?php 
+              if ($hour >= 5 && $hour < 12) echo 'Good Morning';
+              elseif ($hour >= 12 && $hour < 17) echo 'Good Afternoon';
+              elseif ($hour >= 17 && $hour < 21) echo 'Good Evening';
+              else echo 'Good Night';
+            ?>, <strong><?php echo htmlspecialchars($user_name); ?></strong>! Welcome to Furnessence</span>
+          </div>
+          <a href="dashboard.php" class="greeting-dashboard-link">
+            <ion-icon name="grid-outline"></ion-icon> My Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
 
 
 

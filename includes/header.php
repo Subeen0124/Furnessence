@@ -56,6 +56,7 @@ if (!isset($cart_count)) {
         <div class="user-dropdown-wrapper">
           <button class="header-action-btn user-icon-btn" aria-label="user" aria-expanded="false" data-user-dropdown-btn>
             <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+            <span class="header-user-name"><?php echo htmlspecialchars(explode(' ', $user_name)[0]); ?></span>
           </button>
           <div class="user-dropdown-menu" data-user-dropdown>
             <div class="user-dropdown-header">
