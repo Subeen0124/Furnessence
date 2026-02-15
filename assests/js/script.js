@@ -343,9 +343,10 @@ if (userDropdownBtn && userDropdownMenu) {
  */
 
 function initializeProductDetailsButtons() {
-  // Handle add to cart buttons (both classes)
-  const addToCartButtons = document.querySelectorAll('.add-to-cart-btn, .btn-add-cart');
-  const addToWishlistButtons = document.querySelectorAll('.add-to-wishlist-btn, .btn-wishlist');
+  // Handle add to cart buttons ONLY on product details page (.btn-add-cart)
+  // Note: .add-to-cart-btn inside product cards are handled by initializeProductCards()
+  const addToCartButtons = document.querySelectorAll('.btn-add-cart');
+  const addToWishlistButtons = document.querySelectorAll('.btn-wishlist');
   
   addToCartButtons.forEach(btn => {
     btn.addEventListener('click', function(e) {
