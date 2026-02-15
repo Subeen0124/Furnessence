@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+require_once 'includes/algorithms/CartPriceCalculator.php';
 
 $is_logged_in = isset($_SESSION['user_id']);
 $success = '';
@@ -264,25 +265,44 @@ if ($is_logged_in) {
                 <div class="cart-summary">
                     <h2>Order Summary</h2>
                     
+                    <?php
+                    // Use Cart Price Calculator Algorithm
+                    $calculator = new CartPriceCalculator($cart_items);
+                    $pricing = $calculator->calculate();
+                    ?>
+                    
                     <div class="summary-row">
-                        <span>Subtotal:</span>
-                        <span>Rs <?php echo number_format($total, 2); ?></span>
+                        <span>Subtotal (<?php echo $pricing['item_count']; ?> items):</span>
+                        <span>Rs <?php echo number_format($pricing['subtotal'], 2); ?></span>
                     </div>
+                    
+                    <?php if ($pricing['discount_pct'] > 0): ?>
+                    <div class="summary-row" style="color: #27ae60;">
+                        <span>Discount (<?php echo $pricing['discount_pct']; ?>%):</span>
+                        <span>- Rs <?php echo number_format($pricing['discount_amount'], 2); ?></span>
+                    </div>
+                    <?php endif; ?>
                     
                     <div class="summary-row">
                         <span>Shipping:</span>
-                        <span>Free</span>
+                        <span><?php echo $pricing['shipping'] == 0 ? 'Free' : 'Rs ' . number_format($pricing['shipping'], 2); ?></span>
                     </div>
                     
                     <div class="summary-row">
-                        <span>Tax:</span>
-                        <span>Rs <?php echo number_format($total * 0.1, 2); ?></span>
+                        <span>Tax (<?php echo $pricing['tax_rate']; ?>% VAT):</span>
+                        <span>Rs <?php echo number_format($pricing['tax'], 2); ?></span>
                     </div>
                     
                     <div class="summary-row total">
                         <span>Total:</span>
-                        <span>Rs <?php echo number_format($total * 1.1, 2); ?></span>
+                        <span>Rs <?php echo number_format($pricing['grand_total'], 2); ?></span>
                     </div>
+                    
+                    <?php if (!empty($pricing['savings_message'])): ?>
+                    <div class="savings-tip" style="background:#f0fdf4; color:#15803d; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:12px; text-align:center;">
+                        <?php echo $pricing['savings_message']; ?>
+                    </div>
+                    <?php endif; ?>
                     
                     <?php if ($is_logged_in): ?>
                         <button class="checkout-btn" onclick="window.location.href='checkout.php'">

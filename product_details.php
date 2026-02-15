@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+require_once 'includes/algorithms/ProductRecommendation.php';
 
 $is_logged_in = isset($_SESSION['user_id']);
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
@@ -30,18 +31,9 @@ if (!$product_result || mysqli_num_rows($product_result) === 0) {
 
 $product = mysqli_fetch_assoc($product_result);
 
-// Fetch related products (same category)
-$related_stmt = mysqli_prepare($conn, "SELECT p.*, c.name as category_name 
-                  FROM products p 
-                  LEFT JOIN categories c ON p.category_id = c.id 
-                  WHERE p.category_id = ? 
-                  AND p.id != ? 
-                  AND p.is_active = 1 
-                  ORDER BY RAND() 
-                  LIMIT 4");
-mysqli_stmt_bind_param($related_stmt, "ii", $product['category_id'], $product_id);
-mysqli_stmt_execute($related_stmt);
-$related_result = mysqli_stmt_get_result($related_stmt);
+// Use Product Recommendation Algorithm instead of random selection
+$recommendationEngine = new ProductRecommendation($conn, $product, $user_id);
+$recommended_products = $recommendationEngine->getRecommendations(4);
 
 // Get wishlist count
 $wishlist_count = 0;
@@ -430,13 +422,13 @@ $is_low_stock = $product['stock_quantity'] > 0 && $product['stock_quantity'] <= 
             </div>
         </div>
         
-        <!-- Related Products -->
-        <?php if (mysqli_num_rows($related_result) > 0): ?>
+        <!-- Recommended Products (Powered by ProductRecommendation Algorithm) -->
+        <?php if (!empty($recommended_products)): ?>
         <div class="related-products-section">
-            <h2 class="section-title">Related Products</h2>
+            <h2 class="section-title">You May Also Like</h2>
             
             <div class="related-grid">
-                <?php while ($related = mysqli_fetch_assoc($related_result)): 
+                <?php foreach ($recommended_products as $related): 
                     $related_image = !empty($related['image']) ? htmlspecialchars($related['image']) : 'assests/images/products/product-1.jpg';
                     $related_out_of_stock = $related['stock_quantity'] <= 0;
                 ?>
@@ -465,7 +457,7 @@ $is_low_stock = $product['stock_quantity'] > 0 && $product['stock_quantity'] <= 
                         </div>
                     </div>
                 </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>
