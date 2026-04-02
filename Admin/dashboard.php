@@ -32,21 +32,66 @@ $low_stock_result = mysqli_query($conn, $low_stock_query);
 
 // ===== CHART DATA =====
 
-// Monthly Revenue (last 12 months)
+// Revenue Trend Filter
+$revenue_filter_options = [
+    '7d' => 'Last 7 Days',
+    '30d' => 'Last 30 Days',
+    '6m' => 'Last 6 Months',
+    '12m' => 'Last 12 Months',
+    'all' => 'All Time'
+];
+$revenue_range = $_GET['revenue_range'] ?? '12m';
+if (!array_key_exists($revenue_range, $revenue_filter_options)) {
+    $revenue_range = '12m';
+}
+
+$revenue_group_expression = "DATE_FORMAT(created_at, '%Y-%m')";
+$revenue_date_condition = "AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)";
+$revenue_is_daily = false;
+
+switch ($revenue_range) {
+    case '7d':
+        $revenue_group_expression = "DATE(created_at)";
+        $revenue_date_condition = "AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        $revenue_is_daily = true;
+        break;
+    case '30d':
+        $revenue_group_expression = "DATE(created_at)";
+        $revenue_date_condition = "AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+        $revenue_is_daily = true;
+        break;
+    case '6m':
+        $revenue_group_expression = "DATE_FORMAT(created_at, '%Y-%m')";
+        $revenue_date_condition = "AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)";
+        break;
+    case 'all':
+        $revenue_group_expression = "DATE_FORMAT(created_at, '%Y-%m')";
+        $revenue_date_condition = "";
+        break;
+    default:
+        $revenue_group_expression = "DATE_FORMAT(created_at, '%Y-%m')";
+        $revenue_date_condition = "AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)";
+        break;
+}
+
+$revenue_badge_text = $revenue_filter_options[$revenue_range];
+
 $revenue_query = "SELECT 
-    DATE_FORMAT(created_at, '%Y-%m') as month,
+    {$revenue_group_expression} as period,
     SUM(total_amount) as revenue,
     COUNT(*) as order_count
     FROM orders 
-    WHERE status != 'cancelled' AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-    ORDER BY month ASC";
+    WHERE status != 'cancelled' {$revenue_date_condition}
+    GROUP BY {$revenue_group_expression}
+    ORDER BY period ASC";
 $revenue_result = mysqli_query($conn, $revenue_query);
 $monthly_labels = [];
 $monthly_revenue = [];
 $monthly_orders = [];
 while ($row = mysqli_fetch_assoc($revenue_result)) {
-    $monthly_labels[] = date('M Y', strtotime($row['month'] . '-01'));
+    $monthly_labels[] = $revenue_is_daily
+        ? date('M d', strtotime($row['period']))
+        : date('M Y', strtotime($row['period'] . '-01'));
     $monthly_revenue[] = round($row['revenue'], 2);
     $monthly_orders[] = $row['order_count'];
 }
@@ -225,7 +270,16 @@ while ($row = mysqli_fetch_assoc($category_result)) {
                 <div class="dashboard-card chart-card">
                     <div class="card-header">
                         <h2><i class="fas fa-chart-line"></i> Revenue Trend</h2>
-                        <span class="chart-badge">Last 12 Months</span>
+                        <div class="chart-header-actions">
+                            <select id="revenueRangeFilter" class="chart-filter-select" aria-label="Filter revenue chart range">
+                                <?php foreach ($revenue_filter_options as $value => $label): ?>
+                                    <option value="<?php echo $value; ?>" <?php echo $revenue_range === $value ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($label); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <span class="chart-badge"><?php echo htmlspecialchars($revenue_badge_text); ?></span>
+                        </div>
                     </div>
                     <div class="chart-body">
                         <canvas id="revenueChart"></canvas>
@@ -571,6 +625,16 @@ while ($row = mysqli_fetch_assoc($category_result)) {
             }
         }
     });
+
+    // Revenue range filter handler
+    const revenueRangeFilter = document.getElementById('revenueRangeFilter');
+    if (revenueRangeFilter) {
+        revenueRangeFilter.addEventListener('change', function() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('revenue_range', this.value);
+            window.location.search = params.toString();
+        });
+    }
     </script>
 </body>
 </html>
