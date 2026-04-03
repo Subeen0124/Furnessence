@@ -700,7 +700,7 @@ body {
 }
 
 .hero-card .card-title {
-  color: var(--white);
+  color: var(--smokey-black);
   margin-block-end: 5px;
   transition: var(--transition-1);
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7),
@@ -716,7 +716,7 @@ body {
 }
 
 .hero-card .card-text {
-  color: var(--white);
+  color: var(--smokey-black);
   font-size: var(--fs-5);
   transition: var(--transition-1);
   text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.7),
